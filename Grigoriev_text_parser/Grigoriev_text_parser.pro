@@ -20,7 +20,9 @@ SOURCES += \
         classes/pointer.cpp \
         classes/province.cpp \
         classes/work.cpp \
-        main.cpp
+        main.cpp \
+        parser.cpp \
+        reader.cpp
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -39,4 +41,6 @@ HEADERS += \
     classes/person.h \
     classes/pointer.h \
     classes/province.h \
-    classes/work.h
+    classes/work.h \
+    parser.h \
+    reader.h
