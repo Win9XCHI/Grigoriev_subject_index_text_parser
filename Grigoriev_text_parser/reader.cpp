@@ -24,33 +24,46 @@ void Reader::CloseFile()
     file.close();
 }
 
-char Reader::ReadChar()
+wchar_t Reader::ReadChar(bool bIgnoreEnter)
 {
     if (!bOpen)
     {
         throw "File is close";
     }
 
-    char symbol = ' ';
+    wchar_t symbol = ' ';
 
-    if (file.eof())
+    while (true)
     {
-        throw "End of file";
-    }
+        if (file.eof())
+        {
+            throw "End of file";
+        }
 
-    file.get(symbol);
-    NumberOfChar++;
+        file.get(symbol);
+        NumberOfChar++;
 
-    if (symbol == '\0')
-    {
-        CountOfString++;
-        NumberOfCharInString = 1;
+        if (symbol != '\0')
+        {
+            break;
+        }
+
+        if (symbol == '\0')
+        {
+            CountOfString++;
+            NumberOfCharInString = 1;
+
+            if (!bIgnoreEnter)
+            {
+                return symbol;
+            }
+        }
     }
 
     return symbol;
 }
 
-bool Reader::Error(QString str)
+void Reader::Error(QString str)
 {
     if (!ErrorFile.is_open())
     {

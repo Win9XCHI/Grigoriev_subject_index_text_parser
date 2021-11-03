@@ -1,5 +1,6 @@
 #ifndef PARSER_H
 #define PARSER_H
+#include <list>
 #include "reader.h"
 #include "classes/work.h"
 
@@ -7,24 +8,36 @@ class Parser
 {
 public:
     Reader Object_reader;
-    Work Works;
+    std::list<Work*> Works;
     QString buffer;
 
+    wchar_t CurrentSymbol;
+    int NumberOfWork;
+    QString CurrentPageNumber;
+    QString CurrentProvince;
+    //limits
+
     Parser();
+    void ClearData();
 
     bool MainState();
-    void WorkState();
-    void ProvinceState();
-    void PoinerState();
-    void PersonState();
-    void PagesState();
-    void NavigationState();
-    void GraphsState();
-    void CountyState();
-    void Account_unitState();
-    void ContentState();
+    Work& WorkState();
+    QString FirstPageNumberState();
+    QString ProvinceState();
+    QString NumberState(QString& numberInBook);
+    QString NameState(std::list<Account_unit*>& units);
+    QString NumberPageState();
+    QString CityState();
+    QString YearState();
+    QString DegreeState();
+    QString NavigationState();
+    QString PersonState();
 
-    void FirstPageNumber();
+    Content& ContentState();
+    QString CategoryState();
+    QString PagesGraphsState();
+
+    bool CheckEmpty(QString& str);
 };
 
 #endif // PARSER_H

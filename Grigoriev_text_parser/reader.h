@@ -18,9 +18,9 @@ public:
     Reader();
 
     bool OpenFile();
-    char ReadChar();
+    wchar_t ReadChar(bool bIgnoreEnter = true);
     void CloseFile();
-    bool Error(QString str = "");
+    void Error(QString str = "");
     bool IsEOF();
 };
 
