@@ -12,7 +12,7 @@ public:
 
     Parser();
 
-    void MainState();
+    bool MainState();
     void WorkState();
     void ProvinceState();
     void PoinerState();
@@ -23,6 +23,8 @@ public:
     void CountyState();
     void Account_unitState();
     void ContentState();
+
+    void FirstPageNumber();
 };
 
 #endif // PARSER_H

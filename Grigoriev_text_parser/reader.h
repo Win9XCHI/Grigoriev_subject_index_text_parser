@@ -20,7 +20,8 @@ public:
     bool OpenFile();
     char ReadChar();
     void CloseFile();
-    void Error(QString str);
+    bool Error(QString str = "");
+    bool IsEOF();
 };
 
 #endif // READER_H

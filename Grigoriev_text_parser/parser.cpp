@@ -5,7 +5,51 @@ Parser::Parser()
 
 }
 
-void Parser::MainState()
+bool Parser::MainState()
+{
+    try {
+        FirstPageNumber();
+
+        ProvinceState();
+
+        while (!Object_reader.IsEOF())
+        {
+            WorkState();
+        }
+    } catch (bool flag) {
+        return false;
+
+    } catch (QString str) {
+        return false;
+    }
+
+    return true;
+}
+
+void Parser::FirstPageNumber()
+{
+    QString number;
+    char symbol = Object_reader.ReadChar();
+
+    if (symbol != '-')
+    {
+        throw Object_reader.Error();
+    }
+
+    while (symbol = Object_reader.ReadChar() && isdigit(symbol))
+    {
+        number += symbol;
+    }
+
+    if (symbol != '-')
+    {
+        throw Object_reader.Error();
+    }
+
+    while (symbol = Object_reader.ReadChar() && symbol != '\0') {}
+}
+
+void Parser::ProvinceState()
 {
 
 }
@@ -15,10 +59,7 @@ void Parser::WorkState()
 
 }
 
-void Parser::ProvinceState()
-{
 
-}
 
 void Parser::PoinerState()
 {
