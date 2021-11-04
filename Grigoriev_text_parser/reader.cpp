@@ -31,6 +31,7 @@ wchar_t Reader::ReadChar(bool bIgnoreEnter)
         throw "File is close";
     }
 
+    char *symbol_c = nullptr;
     wchar_t symbol = ' ';
 
     while (true)
@@ -40,7 +41,14 @@ wchar_t Reader::ReadChar(bool bIgnoreEnter)
             throw "End of file";
         }
 
-        file.get(symbol);
+        file.read(symbol_c, sizeof(wchar_t));
+
+        if (!symbol_c)
+        {
+            return '\t';
+        }
+
+        symbol = (wchar_t)*symbol_c;
         NumberOfChar++;
 
         if (symbol != '\0')

@@ -151,7 +151,9 @@ Work& Parser::WorkState()
     QString city = CityState();
     QString year = YearState();
     QString degree = DegreeState();
-    QString navigation = NavigationState();
+
+    std::list<Navigation*> Nav;
+    NavigationState(Nav);
     QString persons = PersonState();
 
     ContentState();
@@ -401,9 +403,152 @@ QString Parser::DegreeState()
     return degree;
 }
 
-QString Parser::NavigationState()
+bool string_isdigit(QString str)
 {
+    for (unsigned int i = 0; i < str.size(); i++)
+    {
+        const char* f = qPrintable(str[i]);
+        if (!isdigit(*f))
+        {
+            return false;
+        }
+    }
 
+    return true;
+}
+
+void Parser::NavigationState(std::list<Navigation*>& Nav)
+{
+    QString buffer_str;
+    Navigation* buffer_nav;
+    bool next = true;
+    bool switcher = true;
+
+    if (CheckEmpty(buffer_str))
+    {
+        return;
+    }
+
+    while (next)
+    {
+        next = false;
+
+        while (CurrentSymbol = Object_reader.ReadChar() && CurrentSymbol != '+' || CurrentSymbol != '=' || CurrentSymbol != ' ' || CurrentSymbol != '/')
+        {
+            buffer_str += CurrentSymbol;
+        }
+
+        if (switcher)
+        {
+            buffer_nav = new Navigation;
+
+            if (string_isdigit(buffer_str))
+            {
+                buffer_nav->Arabic = buffer_str.toInt();
+            } else
+            {
+                buffer_nav->Rome = buffer_str;
+            }
+
+        } else
+        {
+            if (buffer_nav)
+            {
+                buffer_nav->Number = buffer_str;
+                Nav.push_back(buffer_nav);
+            }
+        }
+
+        if (CurrentSymbol == '+' || CurrentSymbol == '=')
+        {
+            next = true;
+            switcher = true;
+        }
+
+        if (CurrentSymbol == '/')
+        {
+            switcher = false;
+        }
+
+        if (CurrentSymbol == ' ')
+        {
+            CurrentSymbol = Object_reader.ReadChar();
+
+            if (CurrentSymbol != L'и' || CurrentSymbol != L'с')
+            {
+                throw "";
+            }
+
+            if (CurrentSymbol == L'и')
+            {
+                CurrentSymbol = Object_reader.ReadChar();
+
+                if (CurrentSymbol != ' ')
+                {
+                    throw "";
+                }
+
+                switcher = true;
+
+            } else
+            {
+                CurrentSymbol = Object_reader.ReadChar();
+
+                if (CurrentSymbol != L'т')
+                {
+                    throw "";
+                }
+
+                CurrentSymbol = Object_reader.ReadChar();
+
+                if (CurrentSymbol != L'р')
+                {
+                    throw "";
+                }
+
+                CurrentSymbol = Object_reader.ReadChar();
+
+                if (CurrentSymbol != '.')
+                {
+                    throw "";
+                }
+
+                CurrentSymbol = Object_reader.ReadChar();
+
+                if (CurrentSymbol != ' ')
+                {
+                    throw "";
+                }
+
+                CurrentSymbol = Object_reader.ReadChar();
+
+                if (CurrentSymbol != L'и')
+                {
+                    return;
+                }
+
+                CurrentSymbol = Object_reader.ReadChar();
+
+                if (CurrentSymbol != ' ')
+                {
+                    return;
+                }
+
+                buffer_str = "";
+                while (CurrentSymbol = Object_reader.ReadChar() && !isupper(CurrentSymbol))
+                {
+                    buffer_str += CurrentSymbol;
+                }
+
+                //When save?
+                buffer = CurrentSymbol;
+                return;
+            }
+
+        }
+
+        buffer_str = "";
+    }
 }
 
 QString Parser::PersonState()

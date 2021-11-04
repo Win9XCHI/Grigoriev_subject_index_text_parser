@@ -30,7 +30,7 @@ public:
     QString CityState();
     QString YearState();
     QString DegreeState();
-    QString NavigationState();
+    void NavigationState(std::list<Navigation*>& Nav);
     QString PersonState();
 
     Content& ContentState();
