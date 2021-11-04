@@ -31,7 +31,7 @@ public:
     QString YearState();
     QString DegreeState();
     void NavigationState(std::list<Navigation*>& Nav);
-    QString PersonState();
+    void PersonState(std::list<Person*>& Persons);
 
     Content& ContentState();
     QString CategoryState();

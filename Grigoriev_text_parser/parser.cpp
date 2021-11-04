@@ -154,7 +154,11 @@ Work& Parser::WorkState()
 
     std::list<Navigation*> Nav;
     NavigationState(Nav);
-    QString persons = PersonState();
+
+    std::list<Person*> Persons;
+    PersonState(Persons);
+
+    while (buffer != '\0' || (CurrentSymbol = Object_reader.ReadChar() != '\0')) {}
 
     ContentState();
 
@@ -405,10 +409,10 @@ QString Parser::DegreeState()
 
 bool string_isdigit(QString str)
 {
+    const char* string = qPrintable(str);
     for (unsigned int i = 0; i < str.size(); i++)
     {
-        const char* f = qPrintable(str[i]);
-        if (!isdigit(*f))
+        if (!isdigit(string[i]))
         {
             return false;
         }
@@ -452,11 +456,11 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
 
         } else
         {
-            if (buffer_nav)
-            {
+            //if (buffer_nav)
+            //{
                 buffer_nav->Number = buffer_str;
                 Nav.push_back(buffer_nav);
-            }
+            //}
         }
 
         if (CurrentSymbol == '+' || CurrentSymbol == '=')
@@ -481,6 +485,7 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
 
             if (CurrentSymbol == L'и')
             {
+                buffer_nav->NumberInNextNav = true;
                 CurrentSymbol = Object_reader.ReadChar();
 
                 if (CurrentSymbol != ' ')
@@ -535,12 +540,13 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
                 }
 
                 buffer_str = "";
-                while (CurrentSymbol = Object_reader.ReadChar() && !isupper(CurrentSymbol))
+                while (CurrentSymbol = Object_reader.ReadChar() && !isupper(CurrentSymbol) && CurrentSymbol != '#')
                 {
                     buffer_str += CurrentSymbol;
                 }
 
-                //When save?
+                buffer_nav->AddInfo = buffer_str.left(buffer_str.size() - 1);
+                Nav.push_back(buffer_nav);
                 buffer = CurrentSymbol;
                 return;
             }
@@ -551,9 +557,80 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
     }
 }
 
-QString Parser::PersonState()
+void Parser::PersonState(std::list<Person*>& Persons)
 {
+    QString buffer_str = buffer;
+    QString CurrentRole;
 
+    if (CheckEmpty(buffer))
+    {
+        return;
+    }
+
+    if (buffer == '?')
+    {
+        while (CurrentSymbol = Object_reader.ReadChar() && CurrentSymbol != '\0')
+        {
+            buffer_str += CurrentSymbol;
+        }
+
+        Person* pers = new Person;
+        pers->Name = buffer_str;
+        Persons.push_back(pers);
+        buffer = CurrentSymbol;
+        return;
+    }
+
+    while (true)
+    {
+        while (CurrentSymbol = Object_reader.ReadChar() && CurrentSymbol != ':')
+        {
+            buffer_str += CurrentSymbol;
+        }
+
+        CurrentRole = buffer_str;
+        buffer_str = "";
+
+        CurrentSymbol = Object_reader.ReadChar();
+
+        if (CurrentSymbol != ' ')
+        {
+            throw "";
+        }
+
+        while (true)
+        {
+            while (CurrentSymbol = Object_reader.ReadChar() && CurrentSymbol != ',' && CurrentSymbol != '.' && CurrentSymbol != ';')
+            {
+                buffer_str += CurrentSymbol;
+            }
+
+            Person* pers = new Person;
+            pers->Name = buffer_str;
+            pers->Role = CurrentRole;
+            Persons.push_back(pers);
+
+            if (CurrentSymbol == ';')
+            {
+                break;
+            }
+
+            if (CurrentSymbol == ',')
+            {
+                CurrentSymbol = Object_reader.ReadChar();
+
+                if (CurrentSymbol != ' ')
+                {
+                    throw "";
+                }
+            }
+
+            if (CurrentSymbol == '.')
+            {
+                return;
+            }
+        }
+    }
 }
 
 Content& Parser::ContentState()

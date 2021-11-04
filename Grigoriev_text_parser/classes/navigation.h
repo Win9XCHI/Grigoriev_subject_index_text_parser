@@ -8,6 +8,8 @@ public:
     QString Number;
     QString Rome;
     int Arabic;
+    bool NumberInNextNav;
+    QString AddInfo;
 
     Navigation();
 };
