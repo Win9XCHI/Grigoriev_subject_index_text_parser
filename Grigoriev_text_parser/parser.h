@@ -34,8 +34,8 @@ public:
     void PersonState(std::list<Person*>& Persons);
 
     Content& ContentState();
-    QString CategoryState();
-    QString PagesGraphsState();
+    void CategoryState(std::list<Category*> category);
+    void PagesGraphsState(std::list<Pages*> page, std::list<Graphs*> graph);
 
     bool CheckEmpty(QString& str);
 };

@@ -602,6 +602,10 @@ void Parser::PersonState(std::list<Person*>& Persons)
         {
             while (CurrentSymbol = Object_reader.ReadChar() && CurrentSymbol != ',' && CurrentSymbol != '.' && CurrentSymbol != ';')
             {
+                if (CurrentSymbol == '&')
+                {
+                    CurrentSymbol = '.';
+                }
                 buffer_str += CurrentSymbol;
             }
 
@@ -635,17 +639,153 @@ void Parser::PersonState(std::list<Person*>& Persons)
 
 Content& Parser::ContentState()
 {
-    CategoryState();
-    PagesGraphsState();
+    Content object_content;
+
+    while (CurrentSymbol != '.')
+    {
+        CategoryState(object_content.Object_category);
+
+        if (CurrentSymbol == '`')
+        {
+            continue;
+        }
+
+        PagesGraphsState(object_content.Object_pages, object_content.Object_graphs);
+    }
+
+    return object_content;
 }
 
-QString Parser::CategoryState()
+void Parser::CategoryState(std::list<Category*> category)
 {
+    QString buffer_str;
 
+    while (true)
+    {
+        buffer_str = "";
+        Category* cat = new Category;
+
+        while (CurrentSymbol = Object_reader.ReadChar() && isdigit(CurrentSymbol))
+        {
+            buffer_str += CurrentSymbol;
+        }
+
+        cat->Number = buffer_str.toInt();
+        category.push_back(cat);
+
+        if (CurrentSymbol == ';')
+        {
+            CurrentSymbol = '`';
+            return;
+        }
+
+        if (CurrentSymbol == ',')
+        {
+            continue;
+        }
+
+        if (CurrentSymbol == ' ')
+        {
+            CurrentSymbol = Object_reader.ReadChar();
+            if (CurrentSymbol == L'и')
+            {
+                CurrentSymbol = Object_reader.ReadChar();
+                if (CurrentSymbol != ' ')
+                {
+                    throw "";
+                }
+
+                continue;
+            }
+        }
+
+        return;
+    }
 }
 
-QString Parser::PagesGraphsState()
+void Parser::PagesGraphsState(std::list<Pages*> page, std::list<Graphs*> graph)
 {
+    QString buffer_str;
+    Pages* pg = nullptr;
+    bool switcher = false;
+
+    while (true)
+    {
+        buffer_str = "";
+
+        while (CurrentSymbol = Object_reader.ReadChar() && CurrentSymbol != ',' && CurrentSymbol != '.' && CurrentSymbol != ';' && CurrentSymbol != ' ' && CurrentSymbol != '-')
+        {
+            buffer_str += CurrentSymbol;
+        }
+
+        if (!switcher)
+        {
+            pg = new Pages;
+            pg->Number_1 = buffer_str;
+            page.push_back(pg);
+        } else
+        {
+            int i = 0;
+            for (Pages* item : page)
+            {
+                if (page.size() - 1 == i)
+                {
+                    pg = item;
+                }
+                i++;
+            }
+            pg->Number_2 = buffer_str;
+            switcher = false;
+        }
+
+        if (CurrentSymbol == ',')
+        {
+            return;
+        }
+
+        if (CurrentSymbol == ' ')
+        {
+            CurrentSymbol = Object_reader.ReadChar();
+
+            if (CurrentSymbol == L'и')
+            {
+                CurrentSymbol = Object_reader.ReadChar();
+
+                if (CurrentSymbol != ' ')
+                {
+                    throw "";
+                }
+                continue;
+            }
+
+            if (CurrentSymbol != L'г')
+            {
+                throw "";
+            }
+
+            if (CurrentSymbol != L'р')
+            {
+                throw "";
+            }
+
+            //...graph
+        }
+
+        if (CurrentSymbol == ';')
+        {
+            continue;
+        }
+
+        if (CurrentSymbol == '.')
+        {
+            return;
+        }
+
+        if (CurrentSymbol == '-')
+        {
+            switcher = true;
+        }
+    }
 
 }
 
