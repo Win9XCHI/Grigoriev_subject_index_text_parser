@@ -36,7 +36,7 @@ bool Parser::MainState()
         while (!Object_reader.IsEOF())
         {
             Works.push_back(&WorkState());
-            //NumberPageState()
+            NumberPageState()
         }
 
     } catch (bool flag) {
@@ -162,18 +162,61 @@ Work& Parser::WorkState()
 
     ContentState();
 
-
     return *NewWork;
 }
 
 QString Parser::NumberPageState()
 {
+    QString number;
 
+    while (CurrentSymbol = Object_reader.ReadChar() && CurrentSymbol == '\0') {}
+
+    CurrentSymbol = Object_reader.ReadChar();
+
+    if (CurrentSymbol != '-')
+    {
+        buffer = CurrentSymbol;
+        return "";
+    }
+
+    while (CurrentSymbol = Object_reader.ReadChar() && isdigit(CurrentSymbol))
+    {
+        number += CurrentSymbol;
+    }
+
+    if (CurrentSymbol != '-')
+    {
+        throw "";
+    }
+
+    bool flag = false;
+    for (unsigned int i = 0; i < 200; i++)
+    {
+        CurrentSymbol = Object_reader.ReadChar(false);
+        if (CurrentSymbol == '\0')
+        {
+            flag = true;
+            break;
+        }
+    }
+
+    if (!flag)
+    {
+        throw "";
+    }
+
+    return number;
 }
 
 QString Parser::NumberState(QString& numberInBook)
 {
     QString number;
+
+    if (!buffer.isEmpty())
+    {
+        numberInBook = buffer;
+        buffer = "";
+    }
 
     while (CurrentSymbol = Object_reader.ReadChar() && isdigit(CurrentSymbol))
     {
@@ -738,6 +781,7 @@ void Parser::PagesGraphsState(std::list<Pages*> page, std::list<Graphs*> graph)
             switcher = false;
         }
 
+         //1
         if (CurrentSymbol == ',')
         {
             return;
@@ -768,7 +812,106 @@ void Parser::PagesGraphsState(std::list<Pages*> page, std::list<Graphs*> graph)
                 throw "";
             }
 
-            //...graph
+            int i = 0;
+            for (Pages* item : page)
+            {
+                if (page.size() - 1 == i)
+                {
+                    pg = item;
+                }
+                i++;
+            }
+            Graphs* gr = new Graphs;
+            gr->Number_1 = pg->Number_1;
+            gr->Number_2 = pg->Number_2;
+
+            CurrentSymbol = Object_reader.ReadChar();
+
+            if (CurrentSymbol == '.')
+            {
+                CurrentSymbol = Object_reader.ReadChar();
+
+                //1
+                if (CurrentSymbol == ';')
+                {
+                    graph.push_back(gr);
+                    page.pop_back();
+                    continue;
+                }
+
+                if (CurrentSymbol == ' ')
+                {
+                    CurrentSymbol = Object_reader.ReadChar();
+
+                    if (CurrentSymbol == L'и')
+                    {
+                        CurrentSymbol = Object_reader.ReadChar();
+
+                        if (CurrentSymbol != ' ')
+                        {
+                            throw "";
+                        }
+                        graph.push_back(gr);
+                        page.pop_back();
+                        continue;
+                    }
+                }
+            }
+
+            if (CurrentSymbol == ' ')
+            {
+                CurrentSymbol = Object_reader.ReadChar();
+
+                if (CurrentSymbol != '/')
+                {
+                    throw "";
+                }
+            }
+
+            if (CurrentSymbol == '/')
+            {
+                buffer_str = "";
+                while (CurrentSymbol = Object_reader.ReadChar() && CurrentSymbol != '.')
+                {
+                    if (CurrentSymbol == ' ')
+                    {
+                        continue;
+                    }
+
+                    buffer_str += CurrentSymbol;
+                }
+
+                gr->Table_g = buffer_str;
+                graph.push_back(gr);
+                page.pop_back();
+
+                 //1
+                if (CurrentSymbol == '.')
+                {
+                    CurrentSymbol = Object_reader.ReadChar();
+
+                    if (CurrentSymbol == ';')
+                    {
+                        continue;
+                    }
+
+                    if (CurrentSymbol == ' ')
+                    {
+                        CurrentSymbol = Object_reader.ReadChar();
+
+                        if (CurrentSymbol == L'и')
+                        {
+                            CurrentSymbol = Object_reader.ReadChar();
+
+                            if (CurrentSymbol != ' ')
+                            {
+                                throw "";
+                            }
+                            continue;
+                        }
+                    }
+                }
+            }
         }
 
         if (CurrentSymbol == ';')
