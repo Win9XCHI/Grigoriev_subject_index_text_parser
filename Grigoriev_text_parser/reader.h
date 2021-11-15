@@ -3,17 +3,22 @@
 #include <iostream>
 #include <fstream>
 #include <qstring.h>
+#include <locale>
+#include <codecvt>
+#include <sstream>
+#include <stdio.h>
 
 class Reader
 {
 public:
     bool bOpen;
     std::string filename;
-    std::ifstream file;
+    std::wifstream file;
     std::ofstream ErrorFile;
     int NumberOfChar;
     int CountOfString;
     int NumberOfCharInString;
+    FILE* pFile;
 
     Reader();
 

@@ -36,7 +36,7 @@ bool Parser::MainState()
         while (!Object_reader.IsEOF())
         {
             Works.push_back(&WorkState());
-            NumberPageState()
+            NumberPageState();
         }
 
     } catch (bool flag) {
@@ -48,6 +48,10 @@ bool Parser::MainState()
         Object_reader.Error(str);
         ClearData();
         return false;
+    } catch (const char* str) {
+        Object_reader.Error(str);
+        ClearData();
+        return false;
     }
 
     return true;
@@ -56,17 +60,24 @@ bool Parser::MainState()
 QString Parser::FirstPageNumberState()
 {
     QString number;
+    int limit = 10;
     CurrentSymbol = Object_reader.ReadChar();
 
     if (CurrentSymbol != '-')
     {
-        throw "";
+        throw "FirstPageNumberState 1";
     }
 
     //if(r = getSometimng() > x) { }
     while (CurrentSymbol = Object_reader.ReadChar() && isdigit(CurrentSymbol))
     {
         number += CurrentSymbol;
+
+        if (limit == 0)
+        {
+            throw "FirstPageNumberState 2. Out of limit";
+        }
+        limit--;
     }
 
     if (CurrentSymbol != '-')
@@ -87,7 +98,7 @@ QString Parser::FirstPageNumberState()
 
     if (!flag)
     {
-        throw "";
+        throw "FirstPageNumberState 3";
     }
 
     return number;
@@ -97,25 +108,38 @@ QString Parser::ProvinceState()
 {
     QString province;
     QString number;
+    int limit = 100;
 
     while (CurrentSymbol = Object_reader.ReadChar() && isdigit(CurrentSymbol))
     {
         number += CurrentSymbol;
+
+        if (limit == 0)
+        {
+            throw "ProvinceState 1. Out of limit";
+        }
+        limit--;
     }
 
     if (CurrentSymbol != '.')
     {
-        throw "";
+        throw "ProvinceState 2";
     }
 
     if (CurrentSymbol = Object_reader.ReadChar() && CurrentSymbol != ' ')
     {
-        throw "";
+        throw "ProvinceState 3";
     }
 
     while (CurrentSymbol = Object_reader.ReadChar() && CurrentSymbol != '.')
     {
         province += CurrentSymbol;
+
+        if (limit == 0)
+        {
+            throw "ProvinceState 4. Out of limit";
+        }
+        limit--;
     }
 
     bool flag = false;
@@ -131,7 +155,7 @@ QString Parser::ProvinceState()
 
     if (!flag)
     {
-        throw "";
+        throw "ProvinceState 5";
     }
 
     return province;
@@ -160,7 +184,7 @@ Work& Parser::WorkState()
 
     while (buffer != '\0' || (CurrentSymbol = Object_reader.ReadChar() != '\0')) {}
 
-    ContentState();
+    *NewWork->Object_content = ContentState();
 
     return *NewWork;
 }
@@ -168,8 +192,16 @@ Work& Parser::WorkState()
 QString Parser::NumberPageState()
 {
     QString number;
+    int limit = 100;
 
-    while (CurrentSymbol = Object_reader.ReadChar() && CurrentSymbol == '\0') {}
+    while (CurrentSymbol = Object_reader.ReadChar() && CurrentSymbol == '\0')
+    {
+        if (limit == 0)
+        {
+            throw "NumberPageState 1. Out of limit";
+        }
+        limit--;
+    }
 
     CurrentSymbol = Object_reader.ReadChar();
 
@@ -179,14 +211,21 @@ QString Parser::NumberPageState()
         return "";
     }
 
+    limit = 100;
     while (CurrentSymbol = Object_reader.ReadChar() && isdigit(CurrentSymbol))
     {
         number += CurrentSymbol;
+
+        if (limit == 0)
+        {
+            throw "NumberPageState 2. Out of limit";
+        }
+        limit--;
     }
 
     if (CurrentSymbol != '-')
     {
-        throw "";
+        throw "NumberPageState 3";
     }
 
     bool flag = false;
@@ -202,7 +241,7 @@ QString Parser::NumberPageState()
 
     if (!flag)
     {
-        throw "";
+        throw "NumberPageState 4";
     }
 
     return number;
@@ -211,6 +250,7 @@ QString Parser::NumberPageState()
 QString Parser::NumberState(QString& numberInBook)
 {
     QString number;
+    int limit = 100;
 
     if (!buffer.isEmpty())
     {
@@ -221,21 +261,34 @@ QString Parser::NumberState(QString& numberInBook)
     while (CurrentSymbol = Object_reader.ReadChar() && isdigit(CurrentSymbol))
     {
         numberInBook += CurrentSymbol;
+
+        if (limit == 0)
+        {
+            throw "NumberState 1. Out of limit";
+        }
+        limit--;
     }
 
     if (CurrentSymbol != '/')
     {
-        throw "";
+        throw "NumberState 2";
     }
 
+    limit = 100;
     while (CurrentSymbol = Object_reader.ReadChar() && isdigit(CurrentSymbol))
     {
         number += CurrentSymbol;
+
+        if (limit == 0)
+        {
+            throw "NumberState 3. Out of limit";
+        }
+        limit--;
     }
 
     if (CurrentSymbol != ' ')
     {
-        throw "";
+        throw "NumberState 4";
     }
 
     return number;
@@ -244,6 +297,7 @@ QString Parser::NumberState(QString& numberInBook)
 QString Parser::NameState(std::list<Account_unit*>& units)
 {
     QString GeneralName;
+    int limit = 100;
 
    while (CurrentSymbol = Object_reader.ReadChar() && CurrentSymbol != '.')
    {
@@ -253,6 +307,12 @@ QString Parser::NameState(std::list<Account_unit*>& units)
        }
 
        GeneralName += CurrentSymbol;
+
+       if (limit == 0)
+       {
+           throw "NameState 1. Out of limit";
+       }
+       limit--;
    }
 
     while (true)
@@ -311,9 +371,16 @@ QString Parser::NameState(std::list<Account_unit*>& units)
             CurrentSymbol = Object_reader.ReadChar();
         }
 
+        limit = 100;
         while (CurrentSymbol = Object_reader.ReadChar() && isdigit(CurrentSymbol))
         {
             number += CurrentSymbol;
+
+            if (limit == 0)
+            {
+                throw "NameState 2. Out of limit";
+            }
+            limit--;
         }
 
         unit->Number = number.toInt();
@@ -337,6 +404,7 @@ QString Parser::NameState(std::list<Account_unit*>& units)
             return GeneralName;
         }
 
+        limit = 100;
         while (CurrentSymbol = Object_reader.ReadChar() && CurrentSymbol != '.')
         {
             if (CurrentSymbol == '&')
@@ -345,6 +413,12 @@ QString Parser::NameState(std::list<Account_unit*>& units)
             }
 
             name += CurrentSymbol;
+
+            if (limit == 0)
+            {
+                throw "NameState 3. Out of limit";
+            }
+            limit--;
         }
 
         unit->Name = name;
@@ -357,6 +431,7 @@ QString Parser::NameState(std::list<Account_unit*>& units)
 QString Parser::CityState()
 {
     QString city = buffer;
+    int limit = 100;
 
     if(CheckEmpty(city))
     {
@@ -366,13 +441,19 @@ QString Parser::CityState()
     while (CurrentSymbol = Object_reader.ReadChar() && CurrentSymbol != ',')
     {
         city += CurrentSymbol;
+
+        if (limit == 0)
+        {
+            throw "CityState 1. Out of limit";
+        }
+        limit--;
     }
 
     CurrentSymbol = Object_reader.ReadChar();
 
     if (CurrentSymbol != ' ')
     {
-        throw "";
+        throw "CityState 2";
     }
 
     return city;
@@ -381,6 +462,7 @@ QString Parser::CityState()
 QString Parser::YearState()
 {
     QString year;
+    int limit = 100;
 
     if(CheckEmpty(year))
     {
@@ -390,32 +472,38 @@ QString Parser::YearState()
     while (CurrentSymbol = Object_reader.ReadChar() && isdigit(CurrentSymbol))
     {
         year += CurrentSymbol;
+
+        if (limit == 0)
+        {
+            throw "YearState 1. Out of limit";
+        }
+        limit--;
     }
 
     if (CurrentSymbol != ' ')
     {
-        throw "";
+        throw "YearState 2";
     }
 
     CurrentSymbol = Object_reader.ReadChar();
 
     if (CurrentSymbol != L'г')
     {
-        throw "";
+        throw "YearState 3";
     }
 
     CurrentSymbol = Object_reader.ReadChar();
 
     if (CurrentSymbol != '.')
     {
-        throw "";
+        throw "YearState 4";
     }
 
     CurrentSymbol = Object_reader.ReadChar();
 
     if (CurrentSymbol != ' ')
     {
-        throw "";
+        throw "YearState 5";
     }
 
     return year;
@@ -424,6 +512,7 @@ QString Parser::YearState()
 QString Parser::DegreeState()
 {
     QString degree;
+    int limit = 100;
 
     if (CheckEmpty(degree))
     {
@@ -433,18 +522,24 @@ QString Parser::DegreeState()
     while (CurrentSymbol = Object_reader.ReadChar() && isdigit(CurrentSymbol))
     {
         degree += CurrentSymbol;
+
+        if (limit == 0)
+        {
+            throw "DegreeState 1. Out of limit";
+        }
+        limit--;
     }
 
     if (CurrentSymbol != L'°')
     {
-
+        throw "DegreeState 2";
     }
 
     CurrentSymbol = Object_reader.ReadChar();
 
     if (CurrentSymbol != ' ')
     {
-        throw "";
+        throw "DegreeState 3";
     }
 
     return degree;
@@ -470,6 +565,7 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
     Navigation* buffer_nav;
     bool next = true;
     bool switcher = true;
+    int limit = 100;
 
     if (CheckEmpty(buffer_str))
     {
@@ -480,9 +576,16 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
     {
         next = false;
 
+        limit = 100;
         while (CurrentSymbol = Object_reader.ReadChar() && CurrentSymbol != '+' || CurrentSymbol != '=' || CurrentSymbol != ' ' || CurrentSymbol != '/')
         {
             buffer_str += CurrentSymbol;
+
+            if (limit == 0)
+            {
+                throw "NavigationState 1. Out of limit";
+            }
+            limit--;
         }
 
         if (switcher)
@@ -523,7 +626,7 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
 
             if (CurrentSymbol != L'и' || CurrentSymbol != L'с')
             {
-                throw "";
+                throw "NavigationState 2";
             }
 
             if (CurrentSymbol == L'и')
@@ -533,7 +636,7 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
 
                 if (CurrentSymbol != ' ')
                 {
-                    throw "";
+                    throw "NavigationState 3";
                 }
 
                 switcher = true;
@@ -544,28 +647,28 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
 
                 if (CurrentSymbol != L'т')
                 {
-                    throw "";
+                    throw "NavigationState 4";
                 }
 
                 CurrentSymbol = Object_reader.ReadChar();
 
                 if (CurrentSymbol != L'р')
                 {
-                    throw "";
+                    throw "NavigationState 5";
                 }
 
                 CurrentSymbol = Object_reader.ReadChar();
 
                 if (CurrentSymbol != '.')
                 {
-                    throw "";
+                    throw "NavigationState 6";
                 }
 
                 CurrentSymbol = Object_reader.ReadChar();
 
                 if (CurrentSymbol != ' ')
                 {
-                    throw "";
+                    throw "NavigationState 7";
                 }
 
                 CurrentSymbol = Object_reader.ReadChar();
@@ -583,9 +686,16 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
                 }
 
                 buffer_str = "";
+                limit = 100;
                 while (CurrentSymbol = Object_reader.ReadChar() && !isupper(CurrentSymbol) && CurrentSymbol != '#')
                 {
                     buffer_str += CurrentSymbol;
+
+                    if (limit == 0)
+                    {
+                        throw "NavigationState 8. Out of limit";
+                    }
+                    limit--;
                 }
 
                 buffer_nav->AddInfo = buffer_str.left(buffer_str.size() - 1);
@@ -604,6 +714,7 @@ void Parser::PersonState(std::list<Person*>& Persons)
 {
     QString buffer_str = buffer;
     QString CurrentRole;
+    int limit = 100;
 
     if (CheckEmpty(buffer))
     {
@@ -615,6 +726,12 @@ void Parser::PersonState(std::list<Person*>& Persons)
         while (CurrentSymbol = Object_reader.ReadChar() && CurrentSymbol != '\0')
         {
             buffer_str += CurrentSymbol;
+
+            if (limit == 0)
+            {
+                throw "PersonStat 1. Out of limit";
+            }
+            limit--;
         }
 
         Person* pers = new Person;
@@ -626,9 +743,16 @@ void Parser::PersonState(std::list<Person*>& Persons)
 
     while (true)
     {
+        limit = 100;
         while (CurrentSymbol = Object_reader.ReadChar() && CurrentSymbol != ':')
         {
             buffer_str += CurrentSymbol;
+
+            if (limit == 0)
+            {
+                throw "PersonStat 2. Out of limit";
+            }
+            limit--;
         }
 
         CurrentRole = buffer_str;
@@ -638,11 +762,12 @@ void Parser::PersonState(std::list<Person*>& Persons)
 
         if (CurrentSymbol != ' ')
         {
-            throw "";
+            throw "PersonStat 3";
         }
 
         while (true)
         {
+            limit = 100;
             while (CurrentSymbol = Object_reader.ReadChar() && CurrentSymbol != ',' && CurrentSymbol != '.' && CurrentSymbol != ';')
             {
                 if (CurrentSymbol == '&')
@@ -650,6 +775,12 @@ void Parser::PersonState(std::list<Person*>& Persons)
                     CurrentSymbol = '.';
                 }
                 buffer_str += CurrentSymbol;
+
+                if (limit == 0)
+                {
+                    throw "PersonStat 4. Out of limit";
+                }
+                limit--;
             }
 
             Person* pers = new Person;
@@ -668,7 +799,7 @@ void Parser::PersonState(std::list<Person*>& Persons)
 
                 if (CurrentSymbol != ' ')
                 {
-                    throw "";
+                    throw "PersonStat 5";
                 }
             }
 
@@ -702,15 +833,23 @@ Content& Parser::ContentState()
 void Parser::CategoryState(std::list<Category*> category)
 {
     QString buffer_str;
+    int limit = 100;
 
     while (true)
     {
         buffer_str = "";
         Category* cat = new Category;
 
+        limit = 100;
         while (CurrentSymbol = Object_reader.ReadChar() && isdigit(CurrentSymbol))
         {
             buffer_str += CurrentSymbol;
+
+            if (limit == 0)
+            {
+                throw "CategoryState 1. Out of limit";
+            }
+            limit--;
         }
 
         cat->Number = buffer_str.toInt();
@@ -735,7 +874,7 @@ void Parser::CategoryState(std::list<Category*> category)
                 CurrentSymbol = Object_reader.ReadChar();
                 if (CurrentSymbol != ' ')
                 {
-                    throw "";
+                    throw "CategoryState 2";
                 }
 
                 continue;
@@ -751,14 +890,22 @@ void Parser::PagesGraphsState(std::list<Pages*> page, std::list<Graphs*> graph)
     QString buffer_str;
     Pages* pg = nullptr;
     bool switcher = false;
+    int limit = 100;
 
     while (true)
     {
         buffer_str = "";
 
+        limit = 100;
         while (CurrentSymbol = Object_reader.ReadChar() && CurrentSymbol != ',' && CurrentSymbol != '.' && CurrentSymbol != ';' && CurrentSymbol != ' ' && CurrentSymbol != '-')
         {
             buffer_str += CurrentSymbol;
+
+            if (limit == 0)
+            {
+                throw "PagesGraphsState 1. Out of limit";
+            }
+            limit--;
         }
 
         if (!switcher)
@@ -797,19 +944,19 @@ void Parser::PagesGraphsState(std::list<Pages*> page, std::list<Graphs*> graph)
 
                 if (CurrentSymbol != ' ')
                 {
-                    throw "";
+                    throw "PagesGraphsState 2";
                 }
                 continue;
             }
 
             if (CurrentSymbol != L'г')
             {
-                throw "";
+                throw "PagesGraphsState 3";
             }
 
             if (CurrentSymbol != L'р')
             {
-                throw "";
+                throw "PagesGraphsState 4";
             }
 
             int i = 0;
@@ -849,7 +996,7 @@ void Parser::PagesGraphsState(std::list<Pages*> page, std::list<Graphs*> graph)
 
                         if (CurrentSymbol != ' ')
                         {
-                            throw "";
+                            throw "PagesGraphsState 5";
                         }
                         graph.push_back(gr);
                         page.pop_back();
@@ -864,13 +1011,14 @@ void Parser::PagesGraphsState(std::list<Pages*> page, std::list<Graphs*> graph)
 
                 if (CurrentSymbol != '/')
                 {
-                    throw "";
+                    throw "PagesGraphsState 6";
                 }
             }
 
             if (CurrentSymbol == '/')
             {
                 buffer_str = "";
+                limit = 100;
                 while (CurrentSymbol = Object_reader.ReadChar() && CurrentSymbol != '.')
                 {
                     if (CurrentSymbol == ' ')
@@ -879,6 +1027,12 @@ void Parser::PagesGraphsState(std::list<Pages*> page, std::list<Graphs*> graph)
                     }
 
                     buffer_str += CurrentSymbol;
+
+                    if (limit == 0)
+                    {
+                        throw "PagesGraphsState 7. Out of limit";
+                    }
+                    limit--;
                 }
 
                 gr->Table_g = buffer_str;
@@ -905,7 +1059,7 @@ void Parser::PagesGraphsState(std::list<Pages*> page, std::list<Graphs*> graph)
 
                             if (CurrentSymbol != ' ')
                             {
-                                throw "";
+                                throw "PagesGraphsState 8";
                             }
                             continue;
                         }
