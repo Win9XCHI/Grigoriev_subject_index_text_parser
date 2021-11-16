@@ -18,7 +18,7 @@ public:
     int NumberOfChar;
     int CountOfString;
     int NumberOfCharInString;
-    FILE* pFile;
+    std::vector<std::wstring> StringFile;
 
     Reader();
 

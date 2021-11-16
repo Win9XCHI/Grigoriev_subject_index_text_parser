@@ -1,10 +1,8 @@
 #include "reader.h"
 
-Reader::Reader() : filename("ForParse.txt"), NumberOfChar(1), CountOfString(1), NumberOfCharInString(1)
+Reader::Reader() : filename("ForParse.txt"), NumberOfChar(0), CountOfString(0), NumberOfCharInString(0)
 {
-    //bOpen = OpenFile();
-    bOpen = true;
-    pFile = fopen ("ForParse.txt" , "r");
+    bOpen = OpenFile();
     ErrorFile.open("Error_log.txt");
     ErrorFile.clear();
     ErrorFile.close();
@@ -22,6 +20,15 @@ bool Reader::OpenFile()
         return false;
     }
 
+    std::wstring inputString;
+    while(!file.eof())
+    {
+        getline(file, inputString);
+        StringFile.push_back(inputString);
+    }
+
+    file.close();
+
     return true;
 }
 
@@ -32,84 +39,38 @@ void Reader::CloseFile()
 
 wchar_t Reader::ReadChar(bool bIgnoreEnter)
 {
-
-    std::vector<std::wstring> inputVector;
-        std::wstring inputString, result;
-        std::wifstream inputStream;
-        inputStream.open("ForParse.txt");
-        while(!inputStream.eof())
-        {
-            getline(inputStream, inputString);
-            inputVector.push_back(inputString);
-        }
-        inputStream.close();
-
-        srand(time(NULL));
-        int numLines = rand() % inputVector.size();
-        for(int i = 0; i < numLines; i++)
-        {
-            int randomLine = rand() % inputVector.size();
-            result += inputVector[randomLine];
-        }
-
-        std::wofstream resultStream;
-        resultStream.open("result.txt");
-        resultStream << result;
-        resultStream.close();
-
-    /*if (!bOpen)
+    if (StringFile.size() <= CountOfString)
     {
-        throw "File is close";
+        throw "The end";
     }
 
-    //char symbol_c[2];
-    wchar_t symbol[100];
+    wchar_t c;
 
     while (true)
     {
-        if (file.eof())
-        {
-            throw "End of file";
-        }
-
-        file.imbue(std::locale( ".1251" ));
-        std::wstringstream wss;
-        wss << file.rdbuf();
-        std::wstring st = wss.str();
-        std::wcout << st;
-
-        //file.get(symbol);
-
-        if (fgetws (symbol, 1, pFile) != NULL)
-        {
-            fputws ( symbol, stdout );
-        }
-
-        //symbol_c[1] = '\0';
-
-        //symbol = (wchar_t)*symbol_c;
-        //mbstowcs(symbol, symbol_c, 1);
-        NumberOfChar++;
-        NumberOfCharInString++;
-
-        if (*symbol != '\0')
-        {
-            break;
-        }
-
-        if (*symbol == '\0')
+        if (StringFile[CountOfString].length() == NumberOfCharInString)
         {
             CountOfString++;
-            NumberOfCharInString = 1;
+            NumberOfCharInString = 0;
 
             if (!bIgnoreEnter)
             {
-                return *symbol;
+                return '\0';
             }
+        }
+
+        c = StringFile[CountOfString][NumberOfCharInString];
+
+        NumberOfChar++;
+        NumberOfCharInString++;
+
+        if (NumberOfCharInString != 0)
+        {
+            break;
         }
     }
 
-    return *symbol;*/
+    return c;
 }
 
 void Reader::Error(QString str)
@@ -119,12 +80,12 @@ void Reader::Error(QString str)
         ErrorFile.open("Error_log.txt");
     }
 
-    ErrorFile << CountOfString << ":" << NumberOfCharInString << " = " << str.toStdString();
+    ErrorFile << CountOfString + 1 << ":" << NumberOfCharInString + 1 << " = " << str.toStdString();
 
     ErrorFile.close();
 }
 
 bool Reader::IsEOF()
 {
-    return file.eof();
+    return StringFile.size() == CountOfString;
 }
