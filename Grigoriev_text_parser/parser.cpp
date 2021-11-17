@@ -367,6 +367,18 @@ QString Parser::NameState(std::list<Account_unit*>& units)
         buffer = "";
         CurrentSymbol = Object_reader.ReadChar();
 
+        if (CurrentSymbol != ' ')
+        {
+            if (unit)
+            {
+                delete unit;
+                unit = nullptr;
+            }
+            throw "NameState. Out of limit";
+        }
+
+        CurrentSymbol = Object_reader.ReadChar();
+
         if (CurrentSymbol != L'Т' && CurrentSymbol != L'Ч' && CurrentSymbol != L'В')
         {
             buffer += CurrentSymbol;
@@ -414,7 +426,7 @@ QString Parser::NameState(std::list<Account_unit*>& units)
         }
 
         limit = 100;
-        while (CurrentSymbol = Object_reader.ReadChar() && iswdigit(CurrentSymbol))
+        while (CurrentSymbol = Object_reader.ReadChar())
         {
             if (!iswdigit(CurrentSymbol))
             {
@@ -425,12 +437,17 @@ QString Parser::NameState(std::list<Account_unit*>& units)
 
             if (limit == 0)
             {
+                if (unit)
+                {
+                    delete unit;
+                    unit = nullptr;
+                }
                 throw "NameState 2. Out of limit";
             }
             limit--;
         }
 
-        unit->Number = number.toInt();
+        unit->Number = number;
 
         if (CurrentSymbol != '.')
         {
@@ -451,6 +468,8 @@ QString Parser::NameState(std::list<Account_unit*>& units)
             return GeneralName;
         }
 
+        name = CurrentSymbol;
+
         limit = 100;
         while (CurrentSymbol = Object_reader.ReadChar())
         {
@@ -468,6 +487,11 @@ QString Parser::NameState(std::list<Account_unit*>& units)
 
             if (limit == 0)
             {
+                if (unit)
+                {
+                    delete unit;
+                    unit = nullptr;
+                }
                 throw "NameState 3. Out of limit";
             }
             limit--;
@@ -604,9 +628,16 @@ QString Parser::DegreeState()
 
     CurrentSymbol = Object_reader.ReadChar();
 
-    if (CurrentSymbol != ' ')
+    if (CurrentSymbol != ',')
     {
         throw "DegreeState 3";
+    }
+
+    CurrentSymbol = Object_reader.ReadChar();
+
+    if (CurrentSymbol != ' ')
+    {
+        throw "DegreeState 4";
     }
 
     return degree;
@@ -629,7 +660,7 @@ bool string_iswdigit(QString str)
 void Parser::NavigationState(std::list<Navigation*>& Nav)
 {
     QString buffer_str;
-    Navigation* buffer_nav;
+    Navigation* buffer_nav = nullptr;
     bool next = true;
     bool switcher = true;
     int limit = 100;
@@ -662,6 +693,12 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
 
         if (switcher)
         {
+            if (buffer_nav)
+            {
+                delete buffer_nav;
+                buffer_nav = nullptr;
+            }
+
             buffer_nav = new Navigation;
 
             if (string_iswdigit(buffer_str))
@@ -677,7 +714,6 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
             //if (buffer_nav)
             //{
                 buffer_nav->Number = buffer_str;
-                Nav.push_back(buffer_nav);
             //}
         }
 
@@ -685,6 +721,7 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
         {
             next = true;
             switcher = true;
+            Nav.push_back(buffer_nav);
         }
 
         if (CurrentSymbol == '/')
@@ -698,6 +735,11 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
 
             if (CurrentSymbol != L'и' || CurrentSymbol != L'с')
             {
+                if (buffer_nav)
+                {
+                    delete buffer_nav;
+                    buffer_nav = nullptr;
+                }
                 throw "NavigationState 2";
             }
 
@@ -708,6 +750,11 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
 
                 if (CurrentSymbol != ' ')
                 {
+                    if (buffer_nav)
+                    {
+                        delete buffer_nav;
+                        buffer_nav = nullptr;
+                    }
                     throw "NavigationState 3";
                 }
 
@@ -719,6 +766,11 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
 
                 if (CurrentSymbol != L'т')
                 {
+                    if (buffer_nav)
+                    {
+                        delete buffer_nav;
+                        buffer_nav = nullptr;
+                    }
                     throw "NavigationState 4";
                 }
 
@@ -726,6 +778,11 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
 
                 if (CurrentSymbol != L'р')
                 {
+                    if (buffer_nav)
+                    {
+                        delete buffer_nav;
+                        buffer_nav = nullptr;
+                    }
                     throw "NavigationState 5";
                 }
 
@@ -733,6 +790,11 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
 
                 if (CurrentSymbol != '.')
                 {
+                    if (buffer_nav)
+                    {
+                        delete buffer_nav;
+                        buffer_nav = nullptr;
+                    }
                     throw "NavigationState 6";
                 }
 
@@ -740,6 +802,11 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
 
                 if (CurrentSymbol != ' ')
                 {
+                    if (buffer_nav)
+                    {
+                        delete buffer_nav;
+                        buffer_nav = nullptr;
+                    }
                     throw "NavigationState 7";
                 }
 
@@ -770,6 +837,11 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
 
                     if (limit == 0)
                     {
+                        if (buffer_nav)
+                        {
+                            delete buffer_nav;
+                            buffer_nav = nullptr;
+                        }
                         throw "NavigationState 8. Out of limit";
                     }
                     limit--;
@@ -791,6 +863,7 @@ void Parser::PersonState(std::list<Person*>& Persons)
 {
     QString buffer_str = buffer;
     QString CurrentRole;
+    Person* pers = nullptr;
     int limit = 100;
 
     if (CheckEmpty(buffer))
@@ -811,12 +884,17 @@ void Parser::PersonState(std::list<Person*>& Persons)
 
             if (limit == 0)
             {
+                if (pers)
+                {
+                    delete pers;
+                    pers = nullptr;
+                }
                 throw "PersonStat 1. Out of limit";
             }
             limit--;
         }
 
-        Person* pers = new Person;
+        pers = new Person;
         pers->Name = buffer_str;
         Persons.push_back(pers);
         buffer = CurrentSymbol;
@@ -837,6 +915,11 @@ void Parser::PersonState(std::list<Person*>& Persons)
 
             if (limit == 0)
             {
+                if (pers)
+                {
+                    delete pers;
+                    pers = nullptr;
+                }
                 throw "PersonStat 2. Out of limit";
             }
             limit--;
@@ -849,6 +932,11 @@ void Parser::PersonState(std::list<Person*>& Persons)
 
         if (CurrentSymbol != ' ')
         {
+            if (pers)
+            {
+                delete pers;
+                pers = nullptr;
+            }
             throw "PersonStat 3";
         }
 
@@ -870,12 +958,17 @@ void Parser::PersonState(std::list<Person*>& Persons)
 
                 if (limit == 0)
                 {
+                    if (pers)
+                    {
+                        delete pers;
+                        pers = nullptr;
+                    }
                     throw "PersonStat 4. Out of limit";
                 }
                 limit--;
             }
 
-            Person* pers = new Person;
+            pers = new Person;
             pers->Name = buffer_str;
             pers->Role = CurrentRole;
             Persons.push_back(pers);
@@ -891,6 +984,11 @@ void Parser::PersonState(std::list<Person*>& Persons)
 
                 if (CurrentSymbol != ' ')
                 {
+                    if (pers)
+                    {
+                        delete pers;
+                        pers = nullptr;
+                    }
                     throw "PersonStat 5";
                 }
             }
@@ -944,6 +1042,11 @@ void Parser::CategoryState(std::list<Category*> category)
 
             if (limit == 0)
             {
+                if (cat)
+                {
+                    delete cat;
+                    cat = nullptr;
+                }
                 throw "CategoryState 1. Out of limit";
             }
             limit--;
@@ -971,6 +1074,11 @@ void Parser::CategoryState(std::list<Category*> category)
                 CurrentSymbol = Object_reader.ReadChar();
                 if (CurrentSymbol != ' ')
                 {
+                    if (cat)
+                    {
+                        delete cat;
+                        cat = nullptr;
+                    }
                     throw "CategoryState 2";
                 }
 
@@ -1005,6 +1113,15 @@ void Parser::PagesGraphsState(std::list<Pages*> page, std::list<Graphs*> graph)
 
             if (limit == 0)
             {
+                if (pg)
+                {
+                    if (pg)
+                {
+                    delete pg;
+                    pg = nullptr;
+                }
+                    pg = nullptr;
+                }
                 throw "PagesGraphsState 1. Out of limit";
             }
             limit--;
@@ -1046,6 +1163,11 @@ void Parser::PagesGraphsState(std::list<Pages*> page, std::list<Graphs*> graph)
 
                 if (CurrentSymbol != ' ')
                 {
+                    if (pg)
+                {
+                    delete pg;
+                    pg = nullptr;
+                }
                     throw "PagesGraphsState 2";
                 }
                 continue;
@@ -1053,11 +1175,21 @@ void Parser::PagesGraphsState(std::list<Pages*> page, std::list<Graphs*> graph)
 
             if (CurrentSymbol != L'г')
             {
+                if (pg)
+                {
+                    delete pg;
+                    pg = nullptr;
+                }
                 throw "PagesGraphsState 3";
             }
 
             if (CurrentSymbol != L'р')
             {
+                if (pg)
+                {
+                    delete pg;
+                    pg = nullptr;
+                }
                 throw "PagesGraphsState 4";
             }
 
@@ -1098,6 +1230,11 @@ void Parser::PagesGraphsState(std::list<Pages*> page, std::list<Graphs*> graph)
 
                         if (CurrentSymbol != ' ')
                         {
+                            if (gr)
+                {
+                    delete gr;
+                    gr = nullptr;
+                }
                             throw "PagesGraphsState 5";
                         }
                         graph.push_back(gr);
@@ -1113,6 +1250,11 @@ void Parser::PagesGraphsState(std::list<Pages*> page, std::list<Graphs*> graph)
 
                 if (CurrentSymbol != '/')
                 {
+                    if (gr)
+                {
+                    delete gr;
+                    gr = nullptr;
+                }
                     throw "PagesGraphsState 6";
                 }
             }
@@ -1137,6 +1279,11 @@ void Parser::PagesGraphsState(std::list<Pages*> page, std::list<Graphs*> graph)
 
                     if (limit == 0)
                     {
+                        if (gr)
+                {
+                    delete gr;
+                    gr = nullptr;
+                }
                         throw "PagesGraphsState 7. Out of limit";
                     }
                     limit--;
@@ -1166,6 +1313,11 @@ void Parser::PagesGraphsState(std::list<Pages*> page, std::list<Graphs*> graph)
 
                             if (CurrentSymbol != ' ')
                             {
+                                if (gr)
+                {
+                    delete gr;
+                    gr = nullptr;
+                }
                                 throw "PagesGraphsState 8";
                             }
                             continue;

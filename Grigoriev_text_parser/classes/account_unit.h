@@ -7,7 +7,7 @@ class Account_unit
 public:
     QString Type;
     QString Name;
-    int Number;
+    QString Number;
 
     Account_unit();
 

@@ -19,6 +19,7 @@ public:
 
 
     Work();
+    ~Work();
 };
 
 #endif // WORK_H
