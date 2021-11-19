@@ -186,22 +186,46 @@ Work& Parser::WorkState()
     QString numberInBook;
     QString number = NumberState(numberInBook);
 
+    Pointer* pointer = new Pointer;
+    pointer->Number = number.toInt();
+    pointer->Part = PART;
+    NewWork->Object_pointer = pointer;
+
     std::list<Account_unit*> units;
     QString name = NameState(units);
+    NewWork->name = name;
+    NewWork->Object_account_unit = units;
 
     QString city = CityState();
     QString year = YearState();
     QString degree = DegreeState();
 
+    NewWork->city = city;
+    NewWork->year = year;
+    NewWork->degree = degree;
+
     std::list<Navigation*> Nav;
     NavigationState(Nav);
+    NewWork->Object_navigation = Nav;
 
     std::list<Person*> Persons;
     PersonState(Persons);
+    NewWork->Object_person = Persons;
 
-    while (buffer != '\0' || (CurrentSymbol = Object_reader.ReadChar() != '\0')) {}
+    if (!buffer.isEmpty())
+    {
+        throw "Buffer is not empty";
+    }
 
-    *NewWork->Object_content = ContentState();
+    /*while (CurrentSymbol = Object_reader.ReadChar())
+    {
+        if (CurrentSymbol == '\0')
+        {
+            break;
+        }
+    }*/
+
+    NewWork->Object_content.push_back(ContentState());
 
     return *NewWork;
 }
@@ -645,7 +669,7 @@ QString Parser::DegreeState()
 
 bool string_iswdigit(QString str)
 {
-    const char* string = qPrintable(str);
+    const wchar_t* string = str.toStdWString().c_str(); //qPrintable(str);
     for (unsigned int i = 0; i < str.size(); i++)
     {
         if (!iswdigit(string[i]))
@@ -693,12 +717,6 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
 
         if (switcher)
         {
-            if (buffer_nav)
-            {
-                delete buffer_nav;
-                buffer_nav = nullptr;
-            }
-
             buffer_nav = new Navigation;
 
             if (string_iswdigit(buffer_str))
@@ -726,14 +744,16 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
 
         if (CurrentSymbol == '/')
         {
+            next = true;
             switcher = false;
         }
 
         if (CurrentSymbol == ' ')
         {
+            Nav.push_back(buffer_nav);
             CurrentSymbol = Object_reader.ReadChar();
 
-            if (CurrentSymbol != L'и' || CurrentSymbol != L'с')
+            if (CurrentSymbol != L'и' && CurrentSymbol != L'с')
             {
                 if (buffer_nav)
                 {
@@ -814,6 +834,7 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
 
                 if (CurrentSymbol != L'и')
                 {
+                    buffer = CurrentSymbol;
                     return;
                 }
 
@@ -861,7 +882,7 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
 
 void Parser::PersonState(std::list<Person*>& Persons)
 {
-    QString buffer_str = buffer;
+    QString buffer_str;
     QString CurrentRole;
     Person* pers = nullptr;
     int limit = 100;
@@ -870,6 +891,9 @@ void Parser::PersonState(std::list<Person*>& Persons)
     {
         return;
     }
+
+    buffer_str = buffer;
+    buffer = "";
 
     if (buffer == '?')
     {
@@ -903,6 +927,7 @@ void Parser::PersonState(std::list<Person*>& Persons)
 
     while (true)
     {
+        buffer_str = "";
         limit = 100;
         while (CurrentSymbol = Object_reader.ReadChar())
         {
@@ -942,18 +967,15 @@ void Parser::PersonState(std::list<Person*>& Persons)
 
         while (true)
         {
+            buffer_str = "";
             limit = 100;
             while (CurrentSymbol = Object_reader.ReadChar())
             {
-                if (CurrentSymbol == ',' || CurrentSymbol == '.' || CurrentSymbol == ';')
+                if (CurrentSymbol == ',' || CurrentSymbol == '&' || CurrentSymbol == ';')
                 {
                     break;
                 }
 
-                if (CurrentSymbol == '&')
-                {
-                    CurrentSymbol = '.';
-                }
                 buffer_str += CurrentSymbol;
 
                 if (limit == 0)
@@ -993,7 +1015,7 @@ void Parser::PersonState(std::list<Person*>& Persons)
                 }
             }
 
-            if (CurrentSymbol == '.')
+            if (CurrentSymbol == '&')
             {
                 return;
             }
@@ -1001,20 +1023,20 @@ void Parser::PersonState(std::list<Person*>& Persons)
     }
 }
 
-Content& Parser::ContentState()
+Content* Parser::ContentState()
 {
-    Content object_content;
+    Content *object_content = new Content;
 
     while (CurrentSymbol != '.')
     {
-        CategoryState(object_content.Object_category);
+        CategoryState(object_content->Object_category);
 
         if (CurrentSymbol == '`')
         {
             continue;
         }
 
-        PagesGraphsState(object_content.Object_pages, object_content.Object_graphs);
+        PagesGraphsState(object_content->Object_pages, object_content->Object_graphs);
     }
 
     return object_content;

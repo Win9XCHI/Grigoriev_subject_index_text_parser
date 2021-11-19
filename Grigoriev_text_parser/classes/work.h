@@ -11,12 +11,15 @@ class Work
 {
 public:
     Province* Object_province;
-    Content* Object_content;
-    Navigation* Object_navigation;
-    Person* Object_person;
+    std::list<Content*> Object_content;
+    std::list<Navigation*> Object_navigation;
+    std::list<Person*> Object_person;
     Pointer* Object_pointer;
-    Account_unit* Object_account_unit;
-
+    std::list<Account_unit*> Object_account_unit;
+    QString name;
+    QString city;
+    QString year;
+    QString degree;
 
     Work();
     ~Work();

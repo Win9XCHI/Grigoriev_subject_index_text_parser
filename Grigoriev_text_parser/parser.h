@@ -3,6 +3,7 @@
 #include <list>
 #include "reader.h"
 #include "classes/work.h"
+#include "constants.h"
 
 class Parser
 {
@@ -33,7 +34,7 @@ public:
     void NavigationState(std::list<Navigation*>& Nav);
     void PersonState(std::list<Person*>& Persons);
 
-    Content& ContentState();
+    Content* ContentState();
     void CategoryState(std::list<Category*> category);
     void PagesGraphsState(std::list<Pages*> page, std::list<Graphs*> graph);
 

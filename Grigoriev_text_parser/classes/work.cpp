@@ -11,29 +11,36 @@ Work::~Work()
     {
         delete Object_province;
     }
-
-    if (Object_content)
+    if (Object_content.size() > 0)
     {
-        delete Object_content;
+        for (auto& item : Object_content)
+        {
+            delete item;
+        }
     }
-
-    if (Object_navigation)
+    if (Object_navigation.size() > 0)
     {
-        delete Object_navigation;
+        for (auto& item : Object_navigation)
+        {
+            delete item;
+        }
     }
-
-    if (Object_person)
+    if (Object_person.size() > 0)
     {
-        delete Object_person;
+        for (auto& item : Object_person)
+        {
+            delete item;
+        }
     }
-
     if (Object_pointer)
     {
         delete Object_pointer;
     }
-
-    if (Object_account_unit)
+    if (Object_account_unit.size() > 0)
     {
-        delete Object_account_unit;
+        for (auto& item : Object_account_unit)
+        {
+            delete item;
+        }
     }
 }
