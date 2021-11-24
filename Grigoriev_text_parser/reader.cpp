@@ -37,6 +37,11 @@ void Reader::CloseFile()
     file.close();
 }
 
+bool Reader::IsLastCharInString()
+{
+    return NumberOfCharInString == StringFile[CountOfString].length();
+}
+
 wchar_t Reader::ReadChar(bool bIgnoreEnter)
 {
     if (StringFile.size() <= CountOfString)

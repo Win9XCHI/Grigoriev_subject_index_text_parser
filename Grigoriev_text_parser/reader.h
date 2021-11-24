@@ -27,6 +27,8 @@ public:
     void CloseFile();
     void Error(QString str = "");
     bool IsEOF();
+
+    bool IsLastCharInString();
 };
 
 #endif // READER_H

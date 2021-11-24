@@ -235,20 +235,6 @@ QString Parser::NumberPageState()
     QString number;
     int limit = 100;
 
-    while (CurrentSymbol = Object_reader.ReadChar())
-    {
-        if (CurrentSymbol != '\0')
-        {
-            break;
-        }
-
-        if (limit == 0)
-        {
-            throw "NumberPageState 1. Out of limit";
-        }
-        limit--;
-    }
-
     CurrentSymbol = Object_reader.ReadChar();
 
     if (CurrentSymbol != 8212)
@@ -1036,13 +1022,15 @@ Content* Parser::ContentState()
             continue;
         }
 
-        PagesGraphsState(object_content->Object_pages, object_content->Object_graphs);
+        PagesGraphsState(object_content->Object_pages, object_content->Object_graphs, *object_content->Object_category.back());
     }
+
+    FillAllCategories(object_content->Object_category);
 
     return object_content;
 }
 
-void Parser::CategoryState(std::list<Category*> category)
+void Parser::CategoryState(std::list<Category*>& category)
 {
     QString buffer_str;
     int limit = 100;
@@ -1051,6 +1039,11 @@ void Parser::CategoryState(std::list<Category*> category)
     {
         buffer_str = "";
         Category* cat = new Category;
+
+        if (CurrentSymbol == ',' && !Object_reader.IsLastCharInString())
+        {
+            CurrentSymbol = Object_reader.ReadChar();
+        }
 
         limit = 100;
         while (CurrentSymbol = Object_reader.ReadChar())
@@ -1074,7 +1067,7 @@ void Parser::CategoryState(std::list<Category*> category)
             limit--;
         }
 
-        cat->Number = buffer_str.toInt();
+        cat->Number = buffer_str;
         category.push_back(cat);
 
         if (CurrentSymbol == ';')
@@ -1106,27 +1099,29 @@ void Parser::CategoryState(std::list<Category*> category)
 
                 continue;
             }
+            buffer = CurrentSymbol;
         }
 
         return;
     }
 }
 
-void Parser::PagesGraphsState(std::list<Pages*> page, std::list<Graphs*> graph)
+void Parser::PagesGraphsState(std::list<Pages*>& page, std::list<Graphs*>& graph, Category& category)
 {
     QString buffer_str;
     Pages* pg = nullptr;
-    bool switcher = false;
+    int switcher = 0;
     int limit = 100;
 
     while (true)
     {
-        buffer_str = "";
+        buffer_str = buffer;
+        buffer = "";
 
         limit = 100;
         while (CurrentSymbol = Object_reader.ReadChar())
         {
-            if (CurrentSymbol == ',' || CurrentSymbol == '.' || CurrentSymbol == ';' || CurrentSymbol == ' ' || CurrentSymbol == 8212)
+            if (CurrentSymbol == ',' || CurrentSymbol == '/' || CurrentSymbol == '.' || CurrentSymbol == ';' || CurrentSymbol == ' ' || CurrentSymbol == 8212 || CurrentSymbol == '-')
             {
                 break;
             }
@@ -1149,24 +1144,41 @@ void Parser::PagesGraphsState(std::list<Pages*> page, std::list<Graphs*> graph)
             limit--;
         }
 
-        if (!switcher)
-        {
-            pg = new Pages;
-            pg->Number_1 = buffer_str;
-            page.push_back(pg);
-        } else
-        {
-            int i = 0;
-            for (Pages* item : page)
+        if (buffer_str.size() != 0) {
+            if (switcher == 0)
             {
-                if (page.size() - 1 == i)
+                pg = new Pages;
+                pg->Number_1 = buffer_str;
+                category.object_pages.push_back(pg);
+                page.push_back(pg);
+
+            } else if (switcher == 2)
+            {
+                int i = 0;
+                for (Pages* item : page)
                 {
-                    pg = item;
+                    if (page.size() - 1 == i)
+                    {
+                        pg = item;
+                    }
+                    i++;
                 }
-                i++;
+                pg->Number = buffer_str;
+                switcher = 0;
+
+            } else {
+                int i = 0;
+                for (Pages* item : page)
+                {
+                    if (page.size() - 1 == i)
+                    {
+                        pg = item;
+                    }
+                    i++;
+                }
+                pg->Number_2 = buffer_str;
+                switcher = 0;
             }
-            pg->Number_2 = buffer_str;
-            switcher = false;
         }
 
          //1
@@ -1197,14 +1209,11 @@ void Parser::PagesGraphsState(std::list<Pages*> page, std::list<Graphs*> graph)
 
             if (CurrentSymbol != L'г')
             {
-                if (pg)
-                {
-                    delete pg;
-                    pg = nullptr;
-                }
-                throw "PagesGraphsState 3";
+                buffer = CurrentSymbol;
+                continue;
             }
 
+            CurrentSymbol = Object_reader.ReadChar();
             if (CurrentSymbol != L'р')
             {
                 if (pg)
@@ -1224,21 +1233,34 @@ void Parser::PagesGraphsState(std::list<Pages*> page, std::list<Graphs*> graph)
                 }
                 i++;
             }
-            Graphs* gr = new Graphs;
+            /*Graphs* gr = new Graphs;
+            gr->object_category = &category;
             gr->Number_1 = pg->Number_1;
-            gr->Number_2 = pg->Number_2;
+            gr->Number_2 = pg->Number_2;*/
+
+            pg = page.back();
+            pg->graphs = true;
 
             CurrentSymbol = Object_reader.ReadChar();
 
+            if (CurrentSymbol == ',')
+            {
+                return;
+            }
+
             if (CurrentSymbol == '.')
             {
+                if (Object_reader.IsLastCharInString())
+                {
+                    return;
+                }
                 CurrentSymbol = Object_reader.ReadChar();
 
                 //1
                 if (CurrentSymbol == ';')
                 {
-                    graph.push_back(gr);
-                    page.pop_back();
+                    //graph.push_back(gr);
+                    //page.pop_back();
                     continue;
                 }
 
@@ -1252,15 +1274,15 @@ void Parser::PagesGraphsState(std::list<Pages*> page, std::list<Graphs*> graph)
 
                         if (CurrentSymbol != ' ')
                         {
-                            if (gr)
-                {
-                    delete gr;
-                    gr = nullptr;
-                }
+                            if (pg)
+                            {
+                                delete pg;
+                                pg = nullptr;
+                            }
                             throw "PagesGraphsState 5";
                         }
-                        graph.push_back(gr);
-                        page.pop_back();
+                        //graph.push_back(gr);
+                        //page.pop_back();
                         continue;
                     }
                 }
@@ -1272,10 +1294,10 @@ void Parser::PagesGraphsState(std::list<Pages*> page, std::list<Graphs*> graph)
 
                 if (CurrentSymbol != '/')
                 {
-                    if (gr)
+                    if (pg)
                 {
-                    delete gr;
-                    gr = nullptr;
+                    delete pg;
+                    pg = nullptr;
                 }
                     throw "PagesGraphsState 6";
                 }
@@ -1292,37 +1314,47 @@ void Parser::PagesGraphsState(std::list<Pages*> page, std::list<Graphs*> graph)
                         break;
                     }
 
-                    if (CurrentSymbol == ' ')
+                    //1подв
+                    /*if (CurrentSymbol == ' ')
                     {
                         continue;
-                    }
+                    }*/
 
                     buffer_str += CurrentSymbol;
 
                     if (limit == 0)
                     {
-                        if (gr)
-                {
-                    delete gr;
-                    gr = nullptr;
-                }
+                        if (pg)
+                        {
+                            delete pg;
+                            pg = nullptr;
+                        }
                         throw "PagesGraphsState 7. Out of limit";
                     }
                     limit--;
                 }
 
-                gr->Table_g = buffer_str;
-                graph.push_back(gr);
-                page.pop_back();
+                pg->Table_g = buffer_str;
+                //graph.push_back(gr);
+                //page.pop_back();
 
                  //1
                 if (CurrentSymbol == '.')
                 {
+                    if (Object_reader.IsLastCharInString())
+                    {
+                        return;
+                    }
                     CurrentSymbol = Object_reader.ReadChar();
 
                     if (CurrentSymbol == ';')
                     {
                         continue;
+                    }
+
+                    if (CurrentSymbol == ',')
+                    {
+                        return;
                     }
 
                     if (CurrentSymbol == ' ')
@@ -1335,11 +1367,11 @@ void Parser::PagesGraphsState(std::list<Pages*> page, std::list<Graphs*> graph)
 
                             if (CurrentSymbol != ' ')
                             {
-                                if (gr)
-                {
-                    delete gr;
-                    gr = nullptr;
-                }
+                                if (pg)
+                                {
+                                    delete pg;
+                                    pg = nullptr;
+                                }
                                 throw "PagesGraphsState 8";
                             }
                             continue;
@@ -1347,6 +1379,11 @@ void Parser::PagesGraphsState(std::list<Pages*> page, std::list<Graphs*> graph)
                     }
                 }
             }
+        }
+
+        if (CurrentSymbol == '/')
+        {
+            switcher = 2;
         }
 
         if (CurrentSymbol == ';')
@@ -1359,12 +1396,44 @@ void Parser::PagesGraphsState(std::list<Pages*> page, std::list<Graphs*> graph)
             return;
         }
 
-        if (CurrentSymbol == 8212)
+        if (CurrentSymbol == 8212 || CurrentSymbol == '-')
         {
-            switcher = true;
+            switcher = 1;
         }
     }
 
 }
 
+void Parser::FillAllCategories(std::list<Category*>& categories)
+{
+    std::list<Pages*> pages;
+    std::list<Category*> cat;
+    bool flag = false;
 
+    for (Category* category : categories)
+    {
+        if (category->object_pages.size() == 0)
+        {
+            flag = true;
+            cat.push_back(category);
+        }
+
+        pages.clear();
+
+        for (Pages* page : category->object_pages)
+        {
+            pages.push_back(page);
+        }
+
+        if (category->object_pages.size() != 0 && flag)
+        {
+            for (Category* c : cat)
+            {
+                c->object_pages = pages;
+            }
+
+            cat.clear();
+            flag = false;
+        }
+    }
+}

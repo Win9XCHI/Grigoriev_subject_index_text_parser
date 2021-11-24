@@ -1,6 +1,6 @@
 #include "pages.h"
 
-Pages::Pages()
+Pages::Pages() : graphs(false)
 {
 
 }

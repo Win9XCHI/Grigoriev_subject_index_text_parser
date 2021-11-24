@@ -35,10 +35,11 @@ public:
     void PersonState(std::list<Person*>& Persons);
 
     Content* ContentState();
-    void CategoryState(std::list<Category*> category);
-    void PagesGraphsState(std::list<Pages*> page, std::list<Graphs*> graph);
+    void CategoryState(std::list<Category*>& category);
+    void PagesGraphsState(std::list<Pages*>& page, std::list<Graphs*>& graph, Category& category);
 
     bool CheckEmpty(QString& str);
+    void FillAllCategories(std::list<Category*>& category);
 };
 
 #endif // PARSER_H
