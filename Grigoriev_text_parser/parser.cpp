@@ -344,7 +344,7 @@ QString Parser::NumberState(QString& numberInBook)
 QString Parser::NameState(std::list<Account_unit*>& units)
 {
     QString GeneralName;
-    int limit = 100;
+    int limit = 300;
 
    while (CurrentSymbol = Object_reader.ReadChar())
    {
@@ -692,6 +692,12 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
                 break;
             }
 
+            if (CurrentSymbol == '&')
+            {
+                buffer_str += '.';
+                CurrentSymbol = ' ';
+            }
+
             buffer_str += CurrentSymbol;
 
             if (limit == 0)
@@ -739,7 +745,7 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
             Nav.push_back(buffer_nav);
             CurrentSymbol = Object_reader.ReadChar();
 
-            if (CurrentSymbol != L'и' && CurrentSymbol != L'с')
+            if (CurrentSymbol != L'и' && CurrentSymbol != L'с' && CurrentSymbol != L'т')
             {
                 if (buffer_nav)
                 {
@@ -835,9 +841,14 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
                 limit = 100;
                 while (CurrentSymbol = Object_reader.ReadChar())
                 {
-                    if (iswupper(CurrentSymbol) || CurrentSymbol == '#')
+                    if (/*iswupper(CurrentSymbol)*/ CurrentSymbol == '.' || CurrentSymbol == '#')
                     {
                         break;
+                    }
+
+                    if (CurrentSymbol == '&')
+                    {
+                        CurrentSymbol = '.';
                     }
 
                     buffer_str += CurrentSymbol;
@@ -856,8 +867,19 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
 
                 buffer_nav->AddInfo = buffer_str.left(buffer_str.size() - 1);
                 Nav.push_back(buffer_nav);
-                buffer = CurrentSymbol;
-                return;
+
+                CurrentSymbol = Object_reader.ReadChar();
+                if (CurrentSymbol == '+' || CurrentSymbol == '=')
+                {
+                    next = true;
+                    switcher = true;
+                    Nav.push_back(buffer_nav);
+
+                } else
+                {
+                    buffer = CurrentSymbol;
+                    return;
+                }
             }
 
         }
@@ -873,6 +895,11 @@ void Parser::PersonState(std::list<Person*>& Persons)
     Person* pers = nullptr;
     int limit = 100;
 
+    if (buffer == " ")
+    {
+        buffer = "";
+    }
+
     if (CheckEmpty(buffer))
     {
         return;
@@ -881,11 +908,11 @@ void Parser::PersonState(std::list<Person*>& Persons)
     buffer_str = buffer;
     buffer = "";
 
-    if (buffer == '?')
+    if (buffer_str[0] == '?')
     {
         while (CurrentSymbol = Object_reader.ReadChar())
         {
-            if (CurrentSymbol == '\0')
+            if (CurrentSymbol == '&')
             {
                 break;
             }
@@ -904,10 +931,10 @@ void Parser::PersonState(std::list<Person*>& Persons)
             limit--;
         }
 
+        buffer_str += '.';
         pers = new Person;
         pers->Name = buffer_str;
         Persons.push_back(pers);
-        buffer = CurrentSymbol;
         return;
     }
 
@@ -1181,6 +1208,11 @@ void Parser::PagesGraphsState(std::list<Pages*>& page, std::list<Graphs*>& graph
             }
         }
 
+        if (CurrentSymbol == '.' && !Object_reader.IsLastCharInString())
+        {
+            CurrentSymbol = Object_reader.ReadChar();
+        }
+
          //1
         if (CurrentSymbol == ',')
         {
@@ -1309,7 +1341,7 @@ void Parser::PagesGraphsState(std::list<Pages*>& page, std::list<Graphs*>& graph
                 limit = 100;
                 while (CurrentSymbol = Object_reader.ReadChar())
                 {
-                    if (CurrentSymbol == '.')
+                    if (CurrentSymbol == '.' || CurrentSymbol == ',' || CurrentSymbol == ';')
                     {
                         break;
                     }
@@ -1337,6 +1369,17 @@ void Parser::PagesGraphsState(std::list<Pages*>& page, std::list<Graphs*>& graph
                 pg->Table_g = buffer_str;
                 //graph.push_back(gr);
                 //page.pop_back();
+
+                if (CurrentSymbol == ',')
+                {
+                    return;
+                }
+
+                if (CurrentSymbol == ';')
+                {
+                    switcher = 0;
+                    continue;
+                }
 
                  //1
                 if (CurrentSymbol == '.')

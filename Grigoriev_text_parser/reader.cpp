@@ -64,6 +64,11 @@ wchar_t Reader::ReadChar(bool bIgnoreEnter)
             }
         }
 
+        if (StringFile.size() <= CountOfString)
+        {
+            throw "The end";
+        }
+
         c = StringFile[CountOfString][NumberOfCharInString];
 
         NumberOfChar++;
