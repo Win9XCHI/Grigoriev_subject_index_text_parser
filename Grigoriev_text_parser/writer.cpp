@@ -46,7 +46,7 @@ bool Writer::OpenFile()
 
 void Writer::OutputString(QString str)
 {
-    OutputFile << str.toStdWString() << '\0';
+    OutputFile << str.toStdWString() << std::endl;
 }
 
 void Writer::OutputChar(const wchar_t c)

@@ -8,7 +8,10 @@ int main(int argc, char *argv[])
 
     UnParser object_unparser;
     Parser* object_parser = (Parser*)&object_unparser;
-    object_parser->MainState();
+    if (object_parser->MainState())
+    {
+        object_unparser.MainState();
+    }
 
-    return a.exec();
+    return 0;
 }

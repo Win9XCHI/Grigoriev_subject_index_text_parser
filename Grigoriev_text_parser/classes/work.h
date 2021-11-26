@@ -21,6 +21,8 @@ public:
     QString year;
     QString degree;
 
+    int NumberInBook;
+
     Work();
     ~Work();
 };

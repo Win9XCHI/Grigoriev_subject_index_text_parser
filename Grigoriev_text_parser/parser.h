@@ -2,8 +2,8 @@
 #define PARSER_H
 #include <list>
 #include "writer.h"
+#include "classes/assembly.h"
 #include "classes/work.h"
-#include "constants.h"
 
 class Parser
 {
@@ -11,18 +11,20 @@ public:
     Reader* Object_reader;
     Writer Object_writer;
     std::list<Work*> Works;
+    std::list<Assembly> Assemblies;
     QString buffer;
 
     wchar_t CurrentSymbol;
     int NumberOfWork;
     QString CurrentPageNumber;
     QString CurrentProvince;
-    //limits
+
+    int PART = 1;
 
     Parser();
     void ClearData();
 
-    virtual bool MainState();
+    bool MainState();
     Work& WorkState();
     QString FirstPageNumberState();
     QString ProvinceState();
@@ -41,6 +43,7 @@ public:
 
     bool CheckEmpty(QString& str);
     void FillAllCategories(std::list<Category*>& category);
+    void FillAssemblies();
 };
 
 #endif // PARSER_H

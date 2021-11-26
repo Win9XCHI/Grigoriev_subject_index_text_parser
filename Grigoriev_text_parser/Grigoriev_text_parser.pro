@@ -45,7 +45,6 @@ HEADERS += \
     classes/pointer.h \
     classes/province.h \
     classes/work.h \
-    constants.h \
     filemanager.h \
     parser.h \
     reader.h \

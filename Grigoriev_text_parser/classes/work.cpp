@@ -1,6 +1,6 @@
 #include "work.h"
 
-Work::Work()
+Work::Work() : NumberInBook(0)
 {
 
 }

@@ -26,6 +26,66 @@ bool Parser::CheckEmpty(QString& str)
     return false;
 }
 
+void Parser::FillAssemblies()
+{
+    Assembly ass;
+    ass.Name = "Материалы для оценки земель";
+    ass.numbers.push_back(77);
+    ass.numbers.push_back(78);
+
+    for (int i = 1126; i <= 1132; i++)
+    {
+        ass.numbers.push_back(i);
+    }
+
+    Assemblies.push_back(ass);
+
+    ass.Name = "Сборник статистич. свед.";
+
+    for (int i = 1121; i <= 1122; i++)
+    {
+        ass.numbers.push_back(i);
+    }
+
+    Assemblies.push_back(ass);
+
+    ass.Name = "Статистико-экономич. таблицы";
+
+    for (int i = 1123; i <= 1124; i++)
+    {
+        ass.numbers.push_back(i);
+    }
+
+    Assemblies.push_back(ass);
+
+    ass.Name = "Список населенных мест";
+
+    for (int i = 1134; i <= 1141; i++)
+    {
+        ass.numbers.push_back(i);
+    }
+
+    Assemblies.push_back(ass);
+
+    ass.Name = "Урожай хлебов и трав";
+
+    for (int i = 1143; i <= 1144; i++)
+    {
+        ass.numbers.push_back(i);
+    }
+
+    Assemblies.push_back(ass);
+
+    ass.Name = "Сведения об урожае хлебов и трав";
+
+    for (int i = 1145; i <= 1146; i++)
+    {
+        ass.numbers.push_back(i);
+    }
+
+    Assemblies.push_back(ass);
+}
+
 bool Parser::MainState()
 {
     try {
@@ -38,6 +98,8 @@ bool Parser::MainState()
             Works.push_back(&WorkState());
             NumberPageState();
         }
+
+        FillAssemblies();
 
     } catch (bool flag) {
         Object_writer.Error();
@@ -195,6 +257,7 @@ Work& Parser::WorkState()
 
     QString numberInBook;
     QString number = NumberState(numberInBook);
+    NewWork->NumberInBook = numberInBook.toInt();
 
     Pointer* pointer = new Pointer;
     pointer->Number = number.toInt();
