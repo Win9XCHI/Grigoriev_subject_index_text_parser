@@ -2,7 +2,7 @@
 
 Parser::Parser() : NumberOfWork(0)
 {
-
+    Object_reader = (Reader*)&Object_writer;
 }
 
 void Parser::ClearData()
@@ -15,7 +15,7 @@ void Parser::ClearData()
 
 bool Parser::CheckEmpty(QString& str)
 {
-    CurrentSymbol = Object_reader.ReadChar();
+    CurrentSymbol = Object_reader->ReadChar();
 
     if (CurrentSymbol == '#')
     {
@@ -33,26 +33,35 @@ bool Parser::MainState()
 
         CurrentProvince = ProvinceState();
 
-        while (!Object_reader.IsEOF())
+        while (!Object_reader->IsEOF())
         {
             Works.push_back(&WorkState());
             NumberPageState();
         }
 
     } catch (bool flag) {
-        Object_reader.Error();
+        Object_writer.Error();
         ClearData();
         return false;
 
     } catch (QString str) {
-        Object_reader.Error(str);
-        ClearData();
-        return false;
+        if (str != "The end")
+        {
+            Object_writer.Error(str);
+            ClearData();
+            return false;
+        }
     } catch (const char* str) {
-        Object_reader.Error(str);
-        ClearData();
-        return false;
+        QString f = str;
+        if (f != "The end")
+        {
+            Object_writer.Error(str);
+            ClearData();
+            return false;
+        }
     }
+
+    Object_reader->CloseFile();
 
     return true;
 }
@@ -61,7 +70,7 @@ QString Parser::FirstPageNumberState()
 {
     QString number;
     int limit = 10;
-    CurrentSymbol = Object_reader.ReadChar();
+    CurrentSymbol = Object_reader->ReadChar();
 
     if (CurrentSymbol != 8212)  //'-'
     {
@@ -69,7 +78,7 @@ QString Parser::FirstPageNumberState()
     }
 
     //if(r = getSometimng() > x) { }
-    while (CurrentSymbol = Object_reader.ReadChar())
+    while (CurrentSymbol = Object_reader->ReadChar())
     {
         if (!iswdigit(CurrentSymbol))
         {
@@ -93,7 +102,7 @@ QString Parser::FirstPageNumberState()
     bool flag = false;
     for (unsigned int i = 0; i < 200; i++)
     {
-        CurrentSymbol = Object_reader.ReadChar(false);
+        CurrentSymbol = Object_reader->ReadChar(false);
         if (CurrentSymbol == '\0')
         {
             flag = true;
@@ -115,7 +124,7 @@ QString Parser::ProvinceState()
     QString number;
     int limit = 100;
 
-    while (CurrentSymbol = Object_reader.ReadChar())
+    while (CurrentSymbol = Object_reader->ReadChar())
     {
         if (!iswdigit(CurrentSymbol))
         {
@@ -136,14 +145,14 @@ QString Parser::ProvinceState()
         throw "ProvinceState 2";
     }
 
-    CurrentSymbol = Object_reader.ReadChar();
+    CurrentSymbol = Object_reader->ReadChar();
     if (CurrentSymbol != ' ')
     {
         throw "ProvinceState 3";
     }
 
     limit = 100;
-    while (CurrentSymbol = Object_reader.ReadChar())
+    while (CurrentSymbol = Object_reader->ReadChar())
     {
         if (CurrentSymbol == '.')
         {
@@ -162,7 +171,7 @@ QString Parser::ProvinceState()
     bool flag = false;
     for (unsigned int i = 0; i < 200; i++)
     {
-        CurrentSymbol = Object_reader.ReadChar(false);
+        CurrentSymbol = Object_reader->ReadChar(false);
         if (CurrentSymbol == '\0')
         {
             flag = true;
@@ -182,12 +191,14 @@ Work& Parser::WorkState()
 {
     NumberOfWork++;
     Work* NewWork = new Work;
+    NewWork->province = CurrentProvince;
 
     QString numberInBook;
     QString number = NumberState(numberInBook);
 
     Pointer* pointer = new Pointer;
     pointer->Number = number.toInt();
+    pointer->Page = CurrentPageNumber.toInt();
     pointer->Part = PART;
     NewWork->Object_pointer = pointer;
 
@@ -217,7 +228,7 @@ Work& Parser::WorkState()
         throw "Buffer is not empty";
     }
 
-    /*while (CurrentSymbol = Object_reader.ReadChar())
+    /*while (CurrentSymbol = Object_reader->ReadChar())
     {
         if (CurrentSymbol == '\0')
         {
@@ -235,7 +246,7 @@ QString Parser::NumberPageState()
     QString number;
     int limit = 100;
 
-    CurrentSymbol = Object_reader.ReadChar();
+    CurrentSymbol = Object_reader->ReadChar();
 
     if (CurrentSymbol != 8212)
     {
@@ -244,7 +255,7 @@ QString Parser::NumberPageState()
     }
 
     limit = 100;
-    while (CurrentSymbol = Object_reader.ReadChar())
+    while (CurrentSymbol = Object_reader->ReadChar())
     {
         if (!iswdigit(CurrentSymbol))
         {
@@ -268,7 +279,7 @@ QString Parser::NumberPageState()
     bool flag = false;
     for (unsigned int i = 0; i < 200; i++)
     {
-        CurrentSymbol = Object_reader.ReadChar(false);
+        CurrentSymbol = Object_reader->ReadChar(false);
         if (CurrentSymbol == '\0')
         {
             flag = true;
@@ -295,7 +306,7 @@ QString Parser::NumberState(QString& numberInBook)
         buffer = "";
     }
 
-    while (CurrentSymbol = Object_reader.ReadChar())
+    while (CurrentSymbol = Object_reader->ReadChar())
     {
         if (!iswdigit(CurrentSymbol))
         {
@@ -317,7 +328,7 @@ QString Parser::NumberState(QString& numberInBook)
     }
 
     limit = 100;
-    while (CurrentSymbol = Object_reader.ReadChar())
+    while (CurrentSymbol = Object_reader->ReadChar())
     {
         if (!iswdigit(CurrentSymbol))
         {
@@ -346,7 +357,7 @@ QString Parser::NameState(std::list<Account_unit*>& units)
     QString GeneralName;
     int limit = 300;
 
-   while (CurrentSymbol = Object_reader.ReadChar())
+   while (CurrentSymbol = Object_reader->ReadChar())
    {
        if (CurrentSymbol == '.')
        {
@@ -375,7 +386,7 @@ QString Parser::NameState(std::list<Account_unit*>& units)
         QString name;
 
         buffer = "";
-        CurrentSymbol = Object_reader.ReadChar();
+        CurrentSymbol = Object_reader->ReadChar();
 
         if (CurrentSymbol != ' ')
         {
@@ -387,7 +398,7 @@ QString Parser::NameState(std::list<Account_unit*>& units)
             throw "NameState. Out of limit";
         }
 
-        CurrentSymbol = Object_reader.ReadChar();
+        CurrentSymbol = Object_reader->ReadChar();
 
         if (CurrentSymbol != L'Т' && CurrentSymbol != L'Ч' && CurrentSymbol != L'В')
         {
@@ -399,7 +410,7 @@ QString Parser::NameState(std::list<Account_unit*>& units)
 
         if (CurrentSymbol == L'В')
         {
-            CurrentSymbol = Object_reader.ReadChar();
+            CurrentSymbol = Object_reader->ReadChar();
 
             if (CurrentSymbol != L'ы')
             {
@@ -408,7 +419,7 @@ QString Parser::NameState(std::list<Account_unit*>& units)
             }
 
             type += CurrentSymbol;
-            CurrentSymbol = Object_reader.ReadChar();
+            CurrentSymbol = Object_reader->ReadChar();
 
             if (CurrentSymbol != L'п')
             {
@@ -420,7 +431,7 @@ QString Parser::NameState(std::list<Account_unit*>& units)
         }
 
         unit->Type = type;
-        CurrentSymbol = Object_reader.ReadChar();
+        CurrentSymbol = Object_reader->ReadChar();
 
         if (CurrentSymbol != '.')
         {
@@ -428,15 +439,15 @@ QString Parser::NameState(std::list<Account_unit*>& units)
             break;
         }
 
-        CurrentSymbol = Object_reader.ReadChar();
+        CurrentSymbol = Object_reader->ReadChar();
 
         if (CurrentSymbol == ' ')
         {
-            CurrentSymbol = Object_reader.ReadChar();
+            CurrentSymbol = Object_reader->ReadChar();
         }
 
         limit = 100;
-        while (CurrentSymbol = Object_reader.ReadChar())
+        while (CurrentSymbol = Object_reader->ReadChar())
         {
             if (!iswdigit(CurrentSymbol))
             {
@@ -465,11 +476,11 @@ QString Parser::NameState(std::list<Account_unit*>& units)
             break;
         }
 
-        CurrentSymbol = Object_reader.ReadChar();
+        CurrentSymbol = Object_reader->ReadChar();
 
         if (CurrentSymbol == ' ')
         {
-            CurrentSymbol = Object_reader.ReadChar();
+            CurrentSymbol = Object_reader->ReadChar();
         }
 
         if (CurrentSymbol == '#')
@@ -481,7 +492,7 @@ QString Parser::NameState(std::list<Account_unit*>& units)
         name = CurrentSymbol;
 
         limit = 100;
-        while (CurrentSymbol = Object_reader.ReadChar())
+        while (CurrentSymbol = Object_reader->ReadChar())
         {
             if (CurrentSymbol == '.')
             {
@@ -524,7 +535,7 @@ QString Parser::CityState()
         return "";
     }
 
-    while (CurrentSymbol = Object_reader.ReadChar())
+    while (CurrentSymbol = Object_reader->ReadChar())
     {
         if (CurrentSymbol == ',')
         {
@@ -540,7 +551,7 @@ QString Parser::CityState()
         limit--;
     }
 
-    CurrentSymbol = Object_reader.ReadChar();
+    CurrentSymbol = Object_reader->ReadChar();
 
     if (CurrentSymbol != ' ')
     {
@@ -560,7 +571,7 @@ QString Parser::YearState()
         return "";
     }
 
-    while (CurrentSymbol = Object_reader.ReadChar())
+    while (CurrentSymbol = Object_reader->ReadChar())
     {
         if (!iswdigit(CurrentSymbol))
         {
@@ -581,21 +592,21 @@ QString Parser::YearState()
         throw "YearState 2";
     }
 
-    CurrentSymbol = Object_reader.ReadChar();
+    CurrentSymbol = Object_reader->ReadChar();
 
     if (CurrentSymbol != L'г')
     {
         throw "YearState 3";
     }
 
-    CurrentSymbol = Object_reader.ReadChar();
+    CurrentSymbol = Object_reader->ReadChar();
 
     if (CurrentSymbol != '.')
     {
         throw "YearState 4";
     }
 
-    CurrentSymbol = Object_reader.ReadChar();
+    CurrentSymbol = Object_reader->ReadChar();
 
     if (CurrentSymbol != ' ')
     {
@@ -615,7 +626,7 @@ QString Parser::DegreeState()
         return "";
     }
 
-    while (CurrentSymbol = Object_reader.ReadChar())
+    while (CurrentSymbol = Object_reader->ReadChar())
     {
         if (!iswdigit(CurrentSymbol))
         {
@@ -636,14 +647,14 @@ QString Parser::DegreeState()
         throw "DegreeState 2";
     }
 
-    CurrentSymbol = Object_reader.ReadChar();
+    CurrentSymbol = Object_reader->ReadChar();
 
     if (CurrentSymbol != ',')
     {
         throw "DegreeState 3";
     }
 
-    CurrentSymbol = Object_reader.ReadChar();
+    CurrentSymbol = Object_reader->ReadChar();
 
     if (CurrentSymbol != ' ')
     {
@@ -685,7 +696,7 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
         next = false;
 
         limit = 100;
-        while (CurrentSymbol = Object_reader.ReadChar())
+        while (CurrentSymbol = Object_reader->ReadChar())
         {
             if ( CurrentSymbol == '+' || CurrentSymbol == '=' || CurrentSymbol == ' ' || CurrentSymbol == '/')
             {
@@ -743,7 +754,7 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
         if (CurrentSymbol == ' ')
         {
             Nav.push_back(buffer_nav);
-            CurrentSymbol = Object_reader.ReadChar();
+            CurrentSymbol = Object_reader->ReadChar();
 
             if (CurrentSymbol != L'и' && CurrentSymbol != L'с' && CurrentSymbol != L'т')
             {
@@ -758,7 +769,7 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
             if (CurrentSymbol == L'и')
             {
                 buffer_nav->NumberInNextNav = true;
-                CurrentSymbol = Object_reader.ReadChar();
+                CurrentSymbol = Object_reader->ReadChar();
 
                 if (CurrentSymbol != ' ')
                 {
@@ -774,7 +785,7 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
 
             } else
             {
-                CurrentSymbol = Object_reader.ReadChar();
+                CurrentSymbol = Object_reader->ReadChar();
 
                 if (CurrentSymbol != L'т')
                 {
@@ -786,7 +797,7 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
                     throw "NavigationState 4";
                 }
 
-                CurrentSymbol = Object_reader.ReadChar();
+                CurrentSymbol = Object_reader->ReadChar();
 
                 if (CurrentSymbol != L'р')
                 {
@@ -798,7 +809,7 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
                     throw "NavigationState 5";
                 }
 
-                CurrentSymbol = Object_reader.ReadChar();
+                CurrentSymbol = Object_reader->ReadChar();
 
                 if (CurrentSymbol != '.')
                 {
@@ -810,7 +821,7 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
                     throw "NavigationState 6";
                 }
 
-                CurrentSymbol = Object_reader.ReadChar();
+                CurrentSymbol = Object_reader->ReadChar();
 
                 if (CurrentSymbol != ' ')
                 {
@@ -822,7 +833,7 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
                     throw "NavigationState 7";
                 }
 
-                CurrentSymbol = Object_reader.ReadChar();
+                CurrentSymbol = Object_reader->ReadChar();
 
                 if (CurrentSymbol != L'и')
                 {
@@ -830,7 +841,7 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
                     return;
                 }
 
-                CurrentSymbol = Object_reader.ReadChar();
+                CurrentSymbol = Object_reader->ReadChar();
 
                 if (CurrentSymbol != ' ')
                 {
@@ -839,7 +850,7 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
 
                 buffer_str = "";
                 limit = 100;
-                while (CurrentSymbol = Object_reader.ReadChar())
+                while (CurrentSymbol = Object_reader->ReadChar())
                 {
                     if (/*iswupper(CurrentSymbol)*/ CurrentSymbol == '.' || CurrentSymbol == '#')
                     {
@@ -868,7 +879,7 @@ void Parser::NavigationState(std::list<Navigation*>& Nav)
                 buffer_nav->AddInfo = buffer_str.left(buffer_str.size() - 1);
                 Nav.push_back(buffer_nav);
 
-                CurrentSymbol = Object_reader.ReadChar();
+                CurrentSymbol = Object_reader->ReadChar();
                 if (CurrentSymbol == '+' || CurrentSymbol == '=')
                 {
                     next = true;
@@ -910,7 +921,7 @@ void Parser::PersonState(std::list<Person*>& Persons)
 
     if (buffer_str[0] == '?')
     {
-        while (CurrentSymbol = Object_reader.ReadChar())
+        while (CurrentSymbol = Object_reader->ReadChar())
         {
             if (CurrentSymbol == '&')
             {
@@ -942,7 +953,7 @@ void Parser::PersonState(std::list<Person*>& Persons)
     {
         buffer_str = "";
         limit = 100;
-        while (CurrentSymbol = Object_reader.ReadChar())
+        while (CurrentSymbol = Object_reader->ReadChar())
         {
             if (CurrentSymbol == ':')
             {
@@ -966,7 +977,7 @@ void Parser::PersonState(std::list<Person*>& Persons)
         CurrentRole = buffer_str;
         buffer_str = "";
 
-        CurrentSymbol = Object_reader.ReadChar();
+        CurrentSymbol = Object_reader->ReadChar();
 
         if (CurrentSymbol != ' ')
         {
@@ -982,7 +993,7 @@ void Parser::PersonState(std::list<Person*>& Persons)
         {
             buffer_str = "";
             limit = 100;
-            while (CurrentSymbol = Object_reader.ReadChar())
+            while (CurrentSymbol = Object_reader->ReadChar())
             {
                 if (CurrentSymbol == ',' || CurrentSymbol == '&' || CurrentSymbol == ';')
                 {
@@ -1015,7 +1026,7 @@ void Parser::PersonState(std::list<Person*>& Persons)
 
             if (CurrentSymbol == ',')
             {
-                CurrentSymbol = Object_reader.ReadChar();
+                CurrentSymbol = Object_reader->ReadChar();
 
                 if (CurrentSymbol != ' ')
                 {
@@ -1067,13 +1078,13 @@ void Parser::CategoryState(std::list<Category*>& category)
         buffer_str = "";
         Category* cat = new Category;
 
-        if (CurrentSymbol == ',' && !Object_reader.IsLastCharInString())
+        if (CurrentSymbol == ',' && !Object_reader->IsLastCharInString())
         {
-            CurrentSymbol = Object_reader.ReadChar();
+            CurrentSymbol = Object_reader->ReadChar();
         }
 
         limit = 100;
-        while (CurrentSymbol = Object_reader.ReadChar())
+        while (CurrentSymbol = Object_reader->ReadChar())
         {
             if (!iswdigit(CurrentSymbol))
             {
@@ -1110,10 +1121,10 @@ void Parser::CategoryState(std::list<Category*>& category)
 
         if (CurrentSymbol == ' ')
         {
-            CurrentSymbol = Object_reader.ReadChar();
+            CurrentSymbol = Object_reader->ReadChar();
             if (CurrentSymbol == L'и')
             {
-                CurrentSymbol = Object_reader.ReadChar();
+                CurrentSymbol = Object_reader->ReadChar();
                 if (CurrentSymbol != ' ')
                 {
                     if (cat)
@@ -1146,7 +1157,7 @@ void Parser::PagesGraphsState(std::list<Pages*>& page, std::list<Graphs*>& graph
         buffer = "";
 
         limit = 100;
-        while (CurrentSymbol = Object_reader.ReadChar())
+        while (CurrentSymbol = Object_reader->ReadChar())
         {
             if (CurrentSymbol == ',' || CurrentSymbol == '/' || CurrentSymbol == '.' || CurrentSymbol == ';' || CurrentSymbol == ' ' || CurrentSymbol == 8212 || CurrentSymbol == '-')
             {
@@ -1208,9 +1219,9 @@ void Parser::PagesGraphsState(std::list<Pages*>& page, std::list<Graphs*>& graph
             }
         }
 
-        if (CurrentSymbol == '.' && !Object_reader.IsLastCharInString())
+        if (CurrentSymbol == '.' && !Object_reader->IsLastCharInString())
         {
-            CurrentSymbol = Object_reader.ReadChar();
+            CurrentSymbol = Object_reader->ReadChar();
         }
 
          //1
@@ -1221,11 +1232,11 @@ void Parser::PagesGraphsState(std::list<Pages*>& page, std::list<Graphs*>& graph
 
         if (CurrentSymbol == ' ')
         {
-            CurrentSymbol = Object_reader.ReadChar();
+            CurrentSymbol = Object_reader->ReadChar();
 
             if (CurrentSymbol == L'и')
             {
-                CurrentSymbol = Object_reader.ReadChar();
+                CurrentSymbol = Object_reader->ReadChar();
 
                 if (CurrentSymbol != ' ')
                 {
@@ -1245,7 +1256,7 @@ void Parser::PagesGraphsState(std::list<Pages*>& page, std::list<Graphs*>& graph
                 continue;
             }
 
-            CurrentSymbol = Object_reader.ReadChar();
+            CurrentSymbol = Object_reader->ReadChar();
             if (CurrentSymbol != L'р')
             {
                 if (pg)
@@ -1273,7 +1284,7 @@ void Parser::PagesGraphsState(std::list<Pages*>& page, std::list<Graphs*>& graph
             pg = page.back();
             pg->graphs = true;
 
-            CurrentSymbol = Object_reader.ReadChar();
+            CurrentSymbol = Object_reader->ReadChar();
 
             if (CurrentSymbol == ',')
             {
@@ -1282,11 +1293,11 @@ void Parser::PagesGraphsState(std::list<Pages*>& page, std::list<Graphs*>& graph
 
             if (CurrentSymbol == '.')
             {
-                if (Object_reader.IsLastCharInString())
+                if (Object_reader->IsLastCharInString())
                 {
                     return;
                 }
-                CurrentSymbol = Object_reader.ReadChar();
+                CurrentSymbol = Object_reader->ReadChar();
 
                 //1
                 if (CurrentSymbol == ';')
@@ -1298,11 +1309,11 @@ void Parser::PagesGraphsState(std::list<Pages*>& page, std::list<Graphs*>& graph
 
                 if (CurrentSymbol == ' ')
                 {
-                    CurrentSymbol = Object_reader.ReadChar();
+                    CurrentSymbol = Object_reader->ReadChar();
 
                     if (CurrentSymbol == L'и')
                     {
-                        CurrentSymbol = Object_reader.ReadChar();
+                        CurrentSymbol = Object_reader->ReadChar();
 
                         if (CurrentSymbol != ' ')
                         {
@@ -1322,7 +1333,7 @@ void Parser::PagesGraphsState(std::list<Pages*>& page, std::list<Graphs*>& graph
 
             if (CurrentSymbol == ' ')
             {
-                CurrentSymbol = Object_reader.ReadChar();
+                CurrentSymbol = Object_reader->ReadChar();
 
                 if (CurrentSymbol != '/')
                 {
@@ -1339,7 +1350,7 @@ void Parser::PagesGraphsState(std::list<Pages*>& page, std::list<Graphs*>& graph
             {
                 buffer_str = "";
                 limit = 100;
-                while (CurrentSymbol = Object_reader.ReadChar())
+                while (CurrentSymbol = Object_reader->ReadChar())
                 {
                     if (CurrentSymbol == '.' || CurrentSymbol == ',' || CurrentSymbol == ';')
                     {
@@ -1384,11 +1395,11 @@ void Parser::PagesGraphsState(std::list<Pages*>& page, std::list<Graphs*>& graph
                  //1
                 if (CurrentSymbol == '.')
                 {
-                    if (Object_reader.IsLastCharInString())
+                    if (Object_reader->IsLastCharInString())
                     {
                         return;
                     }
-                    CurrentSymbol = Object_reader.ReadChar();
+                    CurrentSymbol = Object_reader->ReadChar();
 
                     if (CurrentSymbol == ';')
                     {
@@ -1402,11 +1413,11 @@ void Parser::PagesGraphsState(std::list<Pages*>& page, std::list<Graphs*>& graph
 
                     if (CurrentSymbol == ' ')
                     {
-                        CurrentSymbol = Object_reader.ReadChar();
+                        CurrentSymbol = Object_reader->ReadChar();
 
                         if (CurrentSymbol == L'и')
                         {
-                            CurrentSymbol = Object_reader.ReadChar();
+                            CurrentSymbol = Object_reader->ReadChar();
 
                             if (CurrentSymbol != ' ')
                             {

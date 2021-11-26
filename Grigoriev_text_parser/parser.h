@@ -1,14 +1,15 @@
 #ifndef PARSER_H
 #define PARSER_H
 #include <list>
-#include "reader.h"
+#include "writer.h"
 #include "classes/work.h"
 #include "constants.h"
 
 class Parser
 {
 public:
-    Reader Object_reader;
+    Reader* Object_reader;
+    Writer Object_writer;
     std::list<Work*> Works;
     QString buffer;
 
@@ -21,7 +22,7 @@ public:
     Parser();
     void ClearData();
 
-    bool MainState();
+    virtual bool MainState();
     Work& WorkState();
     QString FirstPageNumberState();
     QString ProvinceState();

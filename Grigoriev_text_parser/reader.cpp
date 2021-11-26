@@ -1,11 +1,8 @@
 #include "reader.h"
 
-Reader::Reader() : filename("ForParse.txt"), NumberOfChar(0), CountOfString(0), NumberOfCharInString(0)
+Reader::Reader()
 {
     bOpen = OpenFile();
-    ErrorFile.open("Error_log.txt");
-    ErrorFile.clear();
-    ErrorFile.close();
 }
 
 bool Reader::OpenFile()
@@ -85,14 +82,7 @@ wchar_t Reader::ReadChar(bool bIgnoreEnter)
 
 void Reader::Error(QString str)
 {
-    if (!ErrorFile.is_open())
-    {
-        ErrorFile.open("Error_log.txt");
-    }
 
-    ErrorFile << CountOfString + 1 << ":" << NumberOfCharInString + 1 << " = " << str.toStdString();
-
-    ErrorFile.close();
 }
 
 bool Reader::IsEOF()

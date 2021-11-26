@@ -7,10 +7,6 @@ Work::Work()
 
 Work::~Work()
 {
-    if (Object_province)
-    {
-        delete Object_province;
-    }
     if (Object_content.size() > 0)
     {
         for (auto& item : Object_content)

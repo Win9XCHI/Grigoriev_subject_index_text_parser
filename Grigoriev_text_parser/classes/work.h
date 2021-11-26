@@ -10,7 +10,7 @@
 class Work
 {
 public:
-    Province* Object_province;
+    QString province;
     std::list<Content*> Object_content;
     std::list<Navigation*> Object_navigation;
     std::list<Person*> Object_person;
