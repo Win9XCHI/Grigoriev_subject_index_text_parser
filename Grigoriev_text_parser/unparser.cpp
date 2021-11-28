@@ -1,8 +1,18 @@
 #include "unparser.h"
 
-UnParser::UnParser()
+UnParser::UnParser() : counter(0)
 {
 
+}
+
+QString UnParser::InfoOrNull(QString str)
+{
+    return str == "" ? "NULL" : "'" + str + "'";
+}
+
+int UnParser::InfoOrNull(int number)
+{
+    return number;
 }
 
 bool UnParser::MainState()
@@ -23,7 +33,7 @@ bool UnParser::MainState()
             {
                 bool flag = true;
 
-                for (QString object_person : object_persons)
+                for (QString& object_person : object_persons)
                 {
                     if (object_person == Person->Name) {
                         flag = false;
@@ -85,41 +95,63 @@ void UnParser::OUseDB()
 
 void UnParser::OProvinces()
 {
-    QString str = "INSERT provinces(Name)\0            VALUES\0            ('" + CurrentProvince + "');";
-    Object_writer.OutputString(str);
+    Object_writer.OutputString("INSERT provinces(Name) VALUES (" + InfoOrNull(CurrentProvince) + ");");
 }
 
 void UnParser::OAssemblies()
 {
-    QString str = "SELECT @id_provinces := MAX(id) FROM provinces WHERE Name = 'Екатеринославская губ.';\0            INSERT assemblies(Name, Provinces_id)\0            VALUES\0";
-
-    for (auto& item : Assemblies)
+    if (Assemblies.size() > 0)
     {
-        str += "('" + item.Name + "', @id_provinces),\0";
+        QString str;
+        Object_writer.OutputString("SELECT @id_provinces := MAX(id) FROM provinces WHERE Name = " + InfoOrNull(CurrentProvince) + ";");
+
+        Object_writer.OutputString("INSERT assemblies(Name, Provinces_id) VALUES");
+
+        counter = 0;
+        for (auto& item : Assemblies)
+        {
+            counter++;
+            str = "(" + InfoOrNull(item.Name) + ", @id_provinces)";
+
+            if (counter == Assemblies.size())
+            {
+                str += ';';
+            } else
+            {
+                str += ',';
+            }
+
+            Object_writer.OutputString(str);
+        }
     }
-
-    str[str.length() - 2] = ';';
-
-    Object_writer.OutputString(str);
 }
 
 void UnParser::OPersons(std::list<Person*> persons)
 {
-    QString str = "INSERT persons(Name) \0            VALUES\0";
+    QString str;
+    Object_writer.OutputString("INSERT persons(Name) VALUES");
 
+    counter = 0;
     for (auto& item : persons)
     {
-        str += "('" + item->Name + "'),\0";
-    }
+        counter++;
+        str = "(" + InfoOrNull(item->Name) + ")";
 
-    str[str.length() - 2] = ';';
+        if (counter == persons.size())
+        {
+            str += ';';
+        } else
+        {
+            str += ',';
+        }
 
-    Object_writer.OutputString(str);
+        Object_writer.OutputString(str);
+    }   
 }
 
 void UnParser::OWork(Work* work)
 {
-    QString assebly;
+    QString assebly = "";
 
     for (auto& ass : Assemblies)
     {
@@ -128,53 +160,82 @@ void UnParser::OWork(Work* work)
             if (num == work->NumberInBook)
             {
                 assebly = ass.Name;
+                break;
             }
         }
 
+        if (assebly != "")
+        {
+            break;
+        }
     }
 
-    QString str = "SELECT @id_assemblies := MAX(id) FROM assemblies WHERE Name = '" + assebly + "' AND Provinces_id = @id_provinces;\0";
-    str += "INSERT works(Name, Year_editions, Year_creation, City, Assemblies_id)\0            VALUES\0";
+    Object_writer.OutputString("SELECT @id_assemblies := MAX(id) FROM assemblies WHERE Name = '" + assebly + "' AND Provinces_id = @id_provinces;");
 
-    str += "('" + work->name + "', '" + work->year + "', NULL, '" + work->city + "', @id_assemblies);";
+    Object_writer.OutputString("INSERT works(Name, Year_editions, Year_creation, City, Assemblies_id) VALUES");
 
-    Object_writer.OutputString(str);
+    Object_writer.OutputString("(" + InfoOrNull(work->name) + ", " + InfoOrNull(work->year) + ", NULL, " + InfoOrNull(work->city) + ", @id_assemblies);");
 }
 
 void UnParser::OPointer(Pointer* point)
 {
-    QString lastWork = "SELECT @id_last_work := MAX(id) FROM works;\0\0";
+    Object_writer.OutputString("SELECT @id_last_work := MAX(id) FROM works;");
+    Object_writer.OutputString("INSERT pointer(Part, Number, Page, Works_id) VALUES");
 
-    QString str = "INSERT pointer(Part, Number, Page, Works_id)\0            VALUES\0";
-    str += "(" + QString::number(point->Part) + ", " + QString::number(point->Number) + ", " + QString::number(point->Page) + ", @id_last_work);";
-    Object_writer.OutputString(lastWork + str);
+    QString str = "(" + InfoOrNull(QString::number(point->Part)) + ", " + InfoOrNull(QString::number(point->Number)) + ", " + InfoOrNull(QString::number(point->Page)) + ", @id_last_work);";
+    Object_writer.OutputString(str);
 }
 
 void UnParser::ONavigation(std::list<Navigation*> nav)
 {
-    QString str = "INSERT navigation(Number, Rome, Arabic, Works_id) \0            VALUES\0";
-
-    for (auto& item : nav)
+    if (nav.size() > 0)
     {
-        str += "('" + item->Number + "', '" + item->Rome + "', " + QString::number(item->Arabic) + ", @id_last_work),\0";
-    }
-    str[str.length() - 2] = ';';
+        QString str;
+        Object_writer.OutputString("INSERT navigation(Number, Rome, Arabic, Works_id) VALUES");
 
-    Object_writer.OutputString(str);
+        counter = 0;
+        for (auto& item : nav)
+        {
+            counter++;
+            str = "(" + InfoOrNull(item->Number) + ", " + InfoOrNull(item->Rome) + ", " + InfoOrNull(QString::number(item->Arabic)) + ", @id_last_work)";
+
+            if (counter == nav.size())
+            {
+                str += ';';
+            } else
+            {
+                str += ',';
+            }
+
+            Object_writer.OutputString(str);
+        }
+    }
 }
 
 void UnParser::OUnits(std::list<Account_unit*> unit)
 {
-    QString str = "INSERT account_units(Type, Number, Name, Works_id, Account_units_id)\0            VALUES\0";
-
-    for (auto& item : unit)
+    if (unit.size() > 0)
     {
-        str += "('" + item->Type + "', " + item->Number + ", '" + item->Name + "', @id_last_work, NULL),\0";
+        QString str;
+        Object_writer.OutputString("INSERT account_units(Type, Number, Name, Works_id, Account_units_id) VALUES");
+
+        counter = 0;
+        for (auto& item : unit)
+        {
+            counter++;
+            str = "(" + InfoOrNull(item->Type) + ", " + InfoOrNull(item->Number) + ", " + InfoOrNull(item->Name) + ", @id_last_work, NULL)";
+
+            if (counter == unit.size())
+            {
+                str += ';';
+            } else
+            {
+                str += ',';
+            }
+
+            Object_writer.OutputString(str);
+        }
     }
-
-    str[str.length() - 2] = ';';
-
-    Object_writer.OutputString(str);
 }
 
 void UnParser::OCounties()
@@ -189,11 +250,9 @@ void UnParser::OC_W()
 
 void UnParser::OP_W(Person* pers)
 {
-    QString str = "SELECT @id_person := MAX(id) FROM persons WHERE Name = '" + pers->Name + "';\0";
-    str += "INSERT p_w(Role, Persons_id, Works_id)\0            VALUES\0";
-    str += "('" + pers->Role + "', @id_person, @id_last_work);";
-
-    Object_writer.OutputString(str);
+    Object_writer.OutputString("SELECT @id_person := MAX(id) FROM persons WHERE Name = " + InfoOrNull(pers->Name) + ";");
+    Object_writer.OutputString("INSERT p_w(Role, Persons_id, Works_id) VALUES");
+    Object_writer.OutputString("(" + InfoOrNull(pers->Role) + ", @id_person, @id_last_work);");
 }
 
 void UnParser::OContent_Pages_Graphs(std::list<Content*> contents)
@@ -202,27 +261,62 @@ void UnParser::OContent_Pages_Graphs(std::list<Content*> contents)
     {
         for (auto& cat : content->Object_category)
         {
-            QString str = "INSERT content(Works_id, Categories_id)\0            VALUES (@id_last_work, Search_categories_f('" + cat->Number + "'));\0";
-            QString pages = "SELECT @id_content := MAX(id) FROM content;\0                    INSERT pages(Number_1, Number_2, Number, Content_id)\0";
-            QString graphs = "SELECT @id_content := MAX(id) FROM content;\0                    INSERT graphs(Number_1, Number_2, Table_g, Content_id)\0";
+            QString str;
+            unsigned long long countPage = cat->CountOfPage();
+            unsigned long long countGraph = cat->CountOfGraphs();
+            Object_writer.OutputString("INSERT content(Works_id, Categories_id) VALUES (@id_last_work, Search_categories_f(" + InfoOrNull(cat->Number) + "));");
 
-            for (auto& item : cat->object_pages)
+            if (countPage > 0)
             {
-                if (!item->graphs)
-                {
-                    pages += "VALUES ('" + item->Number_1 + "', " + item->Number_2 + ", " + item->Number + ", @id_content),\0";
-                    continue;
-                }
+                Object_writer.OutputString("SELECT @id_content := MAX(id) FROM content;");
+                Object_writer.OutputString("INSERT pages(Number_1, Number_2, Number, Content_id) VALUES");
 
-                graphs += "VALUES ('" + item->Number_1 + "', " + item->Number_2 + ", " + item->Table_g + ", @id_content),\0";
+                counter = 0;
+                for (auto& item : cat->object_pages)
+                {
+                    if (!item->graphs)
+                    {
+                        counter++;
+                        str = "(" + InfoOrNull(item->Number_1) + ", " + InfoOrNull(item->Number_2) + ", " + InfoOrNull(item->Number) + ", @id_content)";
+
+                        if (counter == countPage)
+                        {
+                            str += ';';
+                        } else
+                        {
+                            str += ',';
+                        }
+
+                        Object_writer.OutputString(str);
+                    }
+                }
             }
 
-            pages[pages.length() - 2] = ';';
-            graphs[graphs.length() - 2] = ';';
+            if (countGraph > 0)
+            {
+                Object_writer.OutputString("SELECT @id_content := MAX(id) FROM content;");
+                Object_writer.OutputString("INSERT graphs(Number_1, Number_2, Table_g, Content_id) VALUES");
 
-            Object_writer.OutputString(str);
-            Object_writer.OutputString(pages);
-            Object_writer.OutputString(graphs);
+                counter = 0;
+                for (auto& item : cat->object_pages)
+                {
+                    if (item->graphs)
+                    {
+                        counter++;
+                        str = "(" + InfoOrNull(item->Number_1) + ", " + InfoOrNull(item->Number_2) + ", " + InfoOrNull(item->Table_g) + ", @id_content)";
+
+                        if (counter == countGraph)
+                        {
+                            str += ';';
+                        } else
+                        {
+                            str += ',';
+                        }
+
+                        Object_writer.OutputString(str);
+                    }
+                }
+            }
         }
     }
 }

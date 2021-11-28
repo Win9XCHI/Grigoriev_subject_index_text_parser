@@ -5,6 +5,8 @@
 class UnParser : public Parser
 {
 public:
+    unsigned long long counter;
+
     UnParser();
 
     bool MainState();
@@ -20,6 +22,9 @@ public:
     void OC_W();
     void OP_W(Person* pers);
     void OContent_Pages_Graphs(std::list<Content*> content);
+
+    QString InfoOrNull(QString str);
+    int InfoOrNull(int number);
 };
 
 #endif // UNPARSER_H

@@ -26,59 +26,17 @@ bool Parser::CheckEmpty(QString& str)
     return false;
 }
 
-void Parser::FillAssemblies()
+void Parser::AddAssembly(QString Name, std::list<int> Numbers, int From, int To)
 {
     Assembly ass;
-    ass.Name = "Материалы для оценки земель";
-    ass.numbers.push_back(77);
-    ass.numbers.push_back(78);
+    ass.Name = Name;
 
-    for (int i = 1126; i <= 1132; i++)
+    for (int& item : Numbers)
     {
-        ass.numbers.push_back(i);
+        ass.numbers.push_back(item);
     }
 
-    Assemblies.push_back(ass);
-
-    ass.Name = "Сборник статистич. свед.";
-
-    for (int i = 1121; i <= 1122; i++)
-    {
-        ass.numbers.push_back(i);
-    }
-
-    Assemblies.push_back(ass);
-
-    ass.Name = "Статистико-экономич. таблицы";
-
-    for (int i = 1123; i <= 1124; i++)
-    {
-        ass.numbers.push_back(i);
-    }
-
-    Assemblies.push_back(ass);
-
-    ass.Name = "Список населенных мест";
-
-    for (int i = 1134; i <= 1141; i++)
-    {
-        ass.numbers.push_back(i);
-    }
-
-    Assemblies.push_back(ass);
-
-    ass.Name = "Урожай хлебов и трав";
-
-    for (int i = 1143; i <= 1144; i++)
-    {
-        ass.numbers.push_back(i);
-    }
-
-    Assemblies.push_back(ass);
-
-    ass.Name = "Сведения об урожае хлебов и трав";
-
-    for (int i = 1145; i <= 1146; i++)
+    for (int i = From; i <= To; i++)
     {
         ass.numbers.push_back(i);
     }
@@ -86,9 +44,26 @@ void Parser::FillAssemblies()
     Assemblies.push_back(ass);
 }
 
+void Parser::FillAssemblies()
+{
+    AddAssembly("Материалы для оценки земель", std::list<int>(77, 78), 1126, 1132);
+
+    AddAssembly("Сборник статистич. свед.", std::list<int>(), 1121, 1122);
+
+    AddAssembly("Статистико-экономич. таблицы", std::list<int>(), 1123, 1124);
+
+    AddAssembly("Список населенных мест", std::list<int>(), 1134, 1141);
+
+    AddAssembly("Урожай хлебов и трав", std::list<int>(), 1143, 1144);
+
+    AddAssembly("Сведения об урожае хлебов и трав", std::list<int>(), 1145, 1146);
+}
+
 bool Parser::MainState()
 {
     try {
+        FillAssemblies();
+
         CurrentPageNumber = FirstPageNumberState();
 
         CurrentProvince = ProvinceState();
@@ -98,8 +73,6 @@ bool Parser::MainState()
             Works.push_back(&WorkState());
             NumberPageState();
         }
-
-        FillAssemblies();
 
     } catch (bool flag) {
         Object_writer.Error();

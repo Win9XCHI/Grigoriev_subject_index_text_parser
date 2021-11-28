@@ -44,6 +44,7 @@ public:
     bool CheckEmpty(QString& str);
     void FillAllCategories(std::list<Category*>& category);
     void FillAssemblies();
+    void AddAssembly(QString Name, std::list<int> Numbers, int From, int To);
 };
 
 #endif // PARSER_H

@@ -12,6 +12,9 @@ public:
     std::list<Pages*> object_pages;
 
     Category();
+
+    unsigned long long CountOfPage();
+    unsigned long long CountOfGraphs();
 };
 
 #endif // CATEGORY_H

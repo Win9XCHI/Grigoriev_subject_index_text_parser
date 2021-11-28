@@ -3,7 +3,8 @@
 #include <fstream>
 #include <sstream>
 #include <stdio.h>
-#include <filemanager.h>
+#include <vector>
+#include "filemanager.h"
 
 class Reader : public FileManager
 {
