@@ -48,6 +48,8 @@ bool UnParser::MainState()
             }
 
             OPersons(persons);
+            persons.clear();
+
             OWork(Work);
             OPointer(Work->Object_pointer);
             ONavigation(Work->Object_navigation);
@@ -128,25 +130,28 @@ void UnParser::OAssemblies()
 
 void UnParser::OPersons(std::list<Person*> persons)
 {
-    QString str;
-    Object_writer.OutputString("INSERT persons(Name) VALUES");
-
-    counter = 0;
-    for (auto& item : persons)
+    if (persons.size() > 0)
     {
-        counter++;
-        str = "(" + InfoOrNull(item->Name) + ")";
+        QString str;
+        Object_writer.OutputString("INSERT persons(Name) VALUES");
 
-        if (counter == persons.size())
+        counter = 0;
+        for (auto& item : persons)
         {
-            str += ';';
-        } else
-        {
-            str += ',';
+            counter++;
+            str = "(" + InfoOrNull(item->Name) + ")";
+
+            if (counter == persons.size())
+            {
+                str += ';';
+            } else
+            {
+                str += ',';
+            }
+
+            Object_writer.OutputString(str);
         }
-
-        Object_writer.OutputString(str);
-    }   
+    }
 }
 
 void UnParser::OWork(Work* work)
