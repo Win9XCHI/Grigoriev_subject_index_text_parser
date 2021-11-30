@@ -47,6 +47,7 @@ wchar_t Reader::ReadChar(bool bIgnoreEnter)
     }
 
     wchar_t c;
+    bool comment = false;
 
     while (true)
     {
@@ -70,6 +71,23 @@ wchar_t Reader::ReadChar(bool bIgnoreEnter)
 
         NumberOfChar++;
         NumberOfCharInString++;
+
+        if (c == '|' && !comment)
+        {
+            comment = true;
+            continue;
+        }
+
+        if (c == '|' && comment)
+        {
+            comment = false;
+            continue;
+        }
+
+        if (comment)
+        {
+            continue;
+        }
 
         if (NumberOfCharInString != 0)
         {

@@ -1,5 +1,12 @@
 #include "parser.h"
 
+/*
+ * need add checking for categories
+ * remove '?' and ' '
+ * fix units detection
+ * first character of person`s role
+ */
+
 Parser::Parser() : NumberOfWork(0)
 {
     Object_reader = (Reader*)&Object_writer;
@@ -71,7 +78,12 @@ bool Parser::MainState()
         while (!Object_reader->IsEOF())
         {
             Works.push_back(&WorkState());
-            NumberPageState();
+            QString num = NumberPageState();
+
+            if (num != "")
+            {
+                CurrentPageNumber = num;
+            }
         }
 
     } catch (bool flag) {
@@ -477,15 +489,15 @@ QString Parser::NameState(std::list<Account_unit*>& units)
 
         CurrentSymbol = Object_reader->ReadChar();
 
-        if (CurrentSymbol == ' ')
+        /*if (CurrentSymbol == ' ')
         {
             CurrentSymbol = Object_reader->ReadChar();
-        }
+        }*/
 
         limit = 100;
         while (CurrentSymbol = Object_reader->ReadChar())
         {
-            if (!iswdigit(CurrentSymbol))
+            if (/*!iswdigit(CurrentSymbol)*/ CurrentSymbol == '.')
             {
                 break;
             }
@@ -1091,7 +1103,7 @@ Content* Parser::ContentState()
     {
         CategoryState(object_content->Object_category);
 
-        if (CurrentSymbol == '`')
+        if (CurrentSymbol == '`' || CurrentSymbol == '.')
         {
             continue;
         }
@@ -1143,6 +1155,11 @@ void Parser::CategoryState(std::list<Category*>& category)
 
         cat->Number = buffer_str;
         category.push_back(cat);
+
+        if (CurrentSymbol == '.')
+        {
+            return;
+        }
 
         if (CurrentSymbol == ';')
         {
