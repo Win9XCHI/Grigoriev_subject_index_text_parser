@@ -30,3 +30,6 @@
 *.exe
 *.out
 *.app
+
+build-Grigoriev_text_parser-Desktop_Qt_6_2_1_MinGW_64_bit-Debug/
+build-Grigoriev_text_parser-Desktop_Qt_5_15_0_MinGW_64_bit-Debug/
